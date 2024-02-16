@@ -46,21 +46,21 @@ class Network:
     Network definition
     """
 
-    spines = ["SW11", "SW12"]
-    leaves = ["SW21", "SW22", "SW23"]
+    spines = [11, 12]
+    leaves = [21, 22, 23]
     links = {
-        ("SW11", "SW21"): {"port": 1},
-        ("SW11", "SW22"): {"port": 2},
-        ("SW11", "SW23"): {"port": 3},
-        ("SW12", "SW21"): {"port": 1},
-        ("SW12", "SW22"): {"port": 2},
-        ("SW12", "SW23"): {"port": 3},
-        ("SW21", "SW11"): {"port": 1},
-        ("SW21", "SW12"): {"port": 2},
-        ("SW22", "SW11"): {"port": 1},
-        ("SW22", "SW12"): {"port": 2},
-        ("SW23", "SW11"): {"port": 1},
-        ("SW23", "SW12"): {"port": 2},
+        (11, 21): {"port": 1},
+        (11, 22): {"port": 2},
+        (11, 23): {"port": 3},
+        (12, 21): {"port": 1},
+        (12, 22): {"port": 2},
+        (12, 23): {"port": 3},
+        (21, 11): {"port": 1},
+        (21, 12): {"port": 2},
+        (22, 11): {"port": 1},
+        (22, 12): {"port": 2},
+        (23, 11): {"port": 1},
+        (23, 12): {"port": 2},
     }
 
 
@@ -77,6 +77,8 @@ class LearningSwitch1(BaseSwitch):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mac_table = {}
+
+        # Ignore these packet types
         self.ignore = [ether_types.ETH_TYPE_LLDP, ether_types.ETH_TYPE_IPV6]
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
@@ -93,7 +95,8 @@ class LearningSwitch1(BaseSwitch):
         msgs = [self.del_flow(datapath)]
 
         if datapath.id in net.leaves:
-            # Add a table-miss entry for TABLE0 table
+            # Add a table-miss entry for TABLE0 table to forward 
+            # packets to the controller
             match = parser.OFPMatch()
             actions = [
                 parser.OFPActionOutput(
@@ -105,7 +108,7 @@ class LearningSwitch1(BaseSwitch):
             msgs += [self.add_flow(datapath, TABLE0, MIN_PRIORITY, match, inst)]
 
         else:
-            # Add a table-miss entry for TABLE0 table
+            # Add a table-miss entry for TABLE0 table to drop packets
             match = parser.OFPMatch()
             inst = []
 
@@ -141,6 +144,7 @@ class LearningSwitch1(BaseSwitch):
         self.logger.debug("Packet from %i %s %s %i", datapath.id, src, dst, in_port)
 
         # Set/Update the node information in the MAC table
+        # the MAC table includes the input port and input switch
         src_host = self.mac_table.get(src, {})
         src_host["port"] = in_port
         src_host["dpid"] = datapath.id
@@ -151,13 +155,14 @@ class LearningSwitch1(BaseSwitch):
         out_port = dst_host["port"] if dst_host else ofproto.OFPP_ALL
 
         if out_port == ofproto.OFPP_ALL:
-            # Destination is unknown
-            # if packet_out is sent to all switches, the will find their way back to CTRL
+            # Destination is unknown, flood  the packet to all leaf switches
+            # If packet_out is sent to all switches, it will find its way back to CTRL
             for leaf in net.leaves:
-                dpath = get_datapath(self, leaf)
                 # Set the in_port to prevent sending pack the packet to the same port
                 # in the source switch
                 in_port = in_port if datapath.id == leaf else ofproto.OFPP_CONTROLLER
+                # Get the datapath object
+                dpath = get_datapath(self, leaf)
                 # Send this packet to the switch to forward it.
                 msgs = self.forward_packet(dpath, event.msg.data, in_port, out_port)
                 self.send_messages(dpath, msgs)
