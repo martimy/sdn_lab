@@ -19,7 +19,7 @@ services:
   # Define a service named "flowmanager"
   flowmanager:
     image: martimy/ryu-flowmanager
-    command: scripts/learning_switch_2.py
+    command: "${FLOW_CMD}" # example: scripts/learning_switch_2.py
     volumes:
      - ./scripts:/home/auser/scripts
     ports:
