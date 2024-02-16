@@ -1,10 +1,10 @@
 ---
 switches:
-  - S11
-  - S12
-  - S21
-  - S22
-  - S23
+  - s11
+  - s12
+  - s21
+  - s22
+  - s23
 
 hosts:
   - name: h1
