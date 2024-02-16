@@ -1,0 +1,71 @@
+---
+switches:
+  - S11
+  - S12
+  - S21
+  - S22
+  - S23
+
+hosts:
+  - name: h1
+    ip: 10.1.1.10
+    mac: 00:00:00:00:00:01
+    default_route: "via 10.1.1.1"
+    connected_to: s21
+    port: 3
+  - name: h2
+    ip: 10.1.1.20
+    mac: 00:00:00:00:00:02
+    default_route: "via 10.1.1.1"
+    connected_to: s21
+    port: 4
+  - name: h3
+    ip: 10.1.1.30
+    mac: 00:00:00:00:00:03
+    default_route: "via 10.1.1.1"
+    connected_to: s22
+    port: 3
+  - name: h4
+    ip: 10.1.1.40
+    mac: 00:00:00:00:00:04
+    default_route: "via 10.1.1.1"
+    connected_to: s22
+    port: 4
+  - name: h5
+    ip: 10.1.1.50
+    mac: 00:00:00:00:00:05
+    default_route: "via 10.1.1.1"
+    connected_to: s23
+    port: 3
+  - name: h6
+    ip: 10.1.1.60
+    mac: 00:00:00:00:00:06
+    default_route: "via 10.1.1.1"
+    connected_to: s23
+    port: 4
+
+links:
+  - source: s11
+    source_port: 1
+    target: s21
+    target_port: 1
+  - source: s11
+    source_port: 2
+    target: s22
+    target_port: 1
+  - source: s11
+    source_port: 3
+    target: s23
+    target_port: 1
+  - source: s12
+    source_port: 1
+    target: s21
+    target_port: 2
+  - source: s12
+    source_port: 2
+    target: s22
+    target_port: 2
+  - source: s12
+    source_port: 3
+    target: s23
+    target_port: 2
