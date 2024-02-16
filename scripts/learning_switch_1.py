@@ -15,6 +15,7 @@ TABLE0 = 0
 LOW_PRIORITY = 0
 MID_PRIORITY = 100
 
+
 class LearningSwitch1(BaseSwitch):
     """
     A L2 switch implementation with one table
@@ -40,10 +41,10 @@ class LearningSwitch1(BaseSwitch):
 
         # Create message to add a table-miss entry for TABLE0 table
         match = parser.OFPMatch()
-        actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
-                                          ofproto.OFPCML_NO_BUFFER)]
-        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
-                                             actions)]
+        actions = [
+            parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, ofproto.OFPCML_NO_BUFFER)
+        ]
+        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
 
         msgs += [self.add_flow(datapath, TABLE0, LOW_PRIORITY, match, inst)]
 
@@ -60,7 +61,7 @@ class LearningSwitch1(BaseSwitch):
         parser = datapath.ofproto_parser
 
         # Get the ingress port
-        in_port = ev.msg.match['in_port']
+        in_port = ev.msg.match["in_port"]
 
         # Get the packet and its header
         pkt = packet.Packet(ev.msg.data)
@@ -74,8 +75,7 @@ class LearningSwitch1(BaseSwitch):
         dst = eth.dst
         src = eth.src
 
-        self.logger.info("packet in %s %s %s %s", datapath.id, src, dst,
-                         in_port)
+        self.logger.info("packet in %s %s %s %s", datapath.id, src, dst, in_port)
 
         # Create a MAC table for the switch if none exists.
         mac_table = self.mac_to_port.setdefault(datapath.id, {})
@@ -94,15 +94,21 @@ class LearningSwitch1(BaseSwitch):
         if out_port != ofproto.OFPP_FLOOD:
             match = parser.OFPMatch(in_port=in_port, eth_src=src, eth_dst=dst)
             actions = [parser.OFPActionOutput(out_port)]
-            inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
-                                                 actions)]
-            msgs = [self.add_flow(datapath, TABLE0, MID_PRIORITY, match, inst,
-                             i_time=0)]
+            inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+            msgs = [
+                self.add_flow(datapath, TABLE0, MID_PRIORITY, match, inst, i_time=0)
+            ]
 
         # Send this packet back to the switch to forward it.
         actions = [parser.OFPActionOutput(out_port)]
-        msgs += [parser.OFPPacketOut(datapath=datapath,
-                                     buffer_id=ofproto.OFP_NO_BUFFER, in_port=in_port,
-                                     actions=actions, data=ev.msg.data)]
+        msgs += [
+            parser.OFPPacketOut(
+                datapath=datapath,
+                buffer_id=ofproto.OFP_NO_BUFFER,
+                in_port=in_port,
+                actions=actions,
+                data=ev.msg.data,
+            )
+        ]
 
         self.send_messages(datapath, msgs)

@@ -16,49 +16,66 @@ def labBaseNetwork():
     "Network Topology of 3 switches and four hosts using mid-level API."
 
     net = Mininet(controller=RemoteController, link=TCLink, switch=OVSSwitch)
-    info('*** Adding controller\n')
-    c0 = net.addController('c0',
-                           controller=RemoteController,
-                           ip='127.0.0.1',
-                           port=6633)
+    info("*** Adding controller\n")
+    c0 = net.addController("c0", controller=RemoteController, ip="127.0.0.1", port=6633)
 
-    info('*** Adding switches\n')
-    s1 = net.addSwitch('SW1')
+    info("*** Adding switches\n")
+    s1 = net.addSwitch("SW1")
 
-    info('*** Adding hosts\n')
-    h1 = net.addHost('h1', cls=Host, mac="00:00:00:00:00:01",
-                     ip='10.1.1.10',  defaultRoute='via 10.1.1.1')
-    h2 = net.addHost('h2', cls=Host, mac="00:00:00:00:00:02",
-                     ip='10.1.1.20',  defaultRoute='via 10.1.1.1')
-    h3 = net.addHost('h3', cls=Host, mac="00:00:00:00:00:03",
-                     ip='10.1.1.30',  defaultRoute='via 10.1.1.1')
-    h4 = net.addHost('h4', cls=Host, mac="00:00:00:00:00:04",
-                     ip='10.1.1.40',  defaultRoute='via 10.1.1.1')
+    info("*** Adding hosts\n")
+    h1 = net.addHost(
+        "h1",
+        cls=Host,
+        mac="00:00:00:00:00:01",
+        ip="10.1.1.10",
+        defaultRoute="via 10.1.1.1",
+    )
+    h2 = net.addHost(
+        "h2",
+        cls=Host,
+        mac="00:00:00:00:00:02",
+        ip="10.1.1.20",
+        defaultRoute="via 10.1.1.1",
+    )
+    h3 = net.addHost(
+        "h3",
+        cls=Host,
+        mac="00:00:00:00:00:03",
+        ip="10.1.1.30",
+        defaultRoute="via 10.1.1.1",
+    )
+    h4 = net.addHost(
+        "h4",
+        cls=Host,
+        mac="00:00:00:00:00:04",
+        ip="10.1.1.40",
+        defaultRoute="via 10.1.1.1",
+    )
 
-    info('*** Adding links\n')
+    info("*** Adding links\n")
     net.addLink(s1, h1, 1)
     net.addLink(s1, h2, 2)
     net.addLink(s1, h3, 3)
     net.addLink(s1, h4, 4)
 
-    info('*** Starting network\n')
+    info("*** Starting network\n")
     net.build()
 
-    info('*** Starting controllers\n')
+    info("*** Starting controllers\n")
     c0.start()
 
-    info('*** Starting switches\n')
+    info("*** Starting switches\n")
     s1.start([c0])
 
     CLI(net)
 
-    info('*** Stopping network')
+    info("*** Stopping network")
     net.stop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # run using:
     # sudo /path/mn_switch_topo.py
 
-    setLogLevel('info')
+    setLogLevel("info")
     labBaseNetwork()

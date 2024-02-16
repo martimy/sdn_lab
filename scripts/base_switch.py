@@ -15,22 +15,47 @@ class BaseSwitch(app_manager.RyuApp):
         super(BaseSwitch, self).__init__(*args, **kwargs)
 
     @staticmethod
-    def add_flow(datapath, table_id, priority, match, inst,
-                 h_time=0, i_time=0, cookie=0, flags=0, buffer_id=None):
+    def add_flow(
+        datapath,
+        table_id,
+        priority,
+        match,
+        inst,
+        h_time=0,
+        i_time=0,
+        cookie=0,
+        flags=0,
+        buffer_id=None,
+    ):
         """
         Compose a FlowMod message to add a flow entry and return the message.
         """
 
         parser = datapath.ofproto_parser
-        mod = parser.OFPFlowMod(datapath=datapath, table_id=table_id,
-                                priority=priority, hard_timeout=h_time,
-                                idle_timeout=i_time, cookie=cookie, flags=flags,
-                                match=match, instructions=inst)
+        mod = parser.OFPFlowMod(
+            datapath=datapath,
+            table_id=table_id,
+            priority=priority,
+            hard_timeout=h_time,
+            idle_timeout=i_time,
+            cookie=cookie,
+            flags=flags,
+            match=match,
+            instructions=inst,
+        )
 
         return mod
 
     @staticmethod
-    def del_flow(datapath, table_id=-1, match=None, cookie=0, cookie_mask=-1, out_port=0, out_group=0):
+    def del_flow(
+        datapath,
+        table_id=-1,
+        match=None,
+        cookie=0,
+        cookie_mask=-1,
+        out_port=0,
+        out_group=0,
+    ):
         """
         Compose a FlowMod message to delete a flow entry and return the message.
         """
@@ -42,11 +67,16 @@ class BaseSwitch(app_manager.RyuApp):
         cookie_mask = cookie_mask if cookie_mask > -1 else 0xFFFFFFFFFFFFFFFF
 
         parser = datapath.ofproto_parser
-        mod = parser.OFPFlowMod(datapath=datapath, table_id=table_id,
-                                cookie=cookie,
-                                cookie_mask=cookie_mask,
-                                match=match, command=ofproto.OFPFC_DELETE,
-                                out_port=out_port, out_group=out_group)
+        mod = parser.OFPFlowMod(
+            datapath=datapath,
+            table_id=table_id,
+            cookie=cookie,
+            cookie_mask=cookie_mask,
+            match=match,
+            command=ofproto.OFPFC_DELETE,
+            out_port=out_port,
+            out_group=out_group,
+        )
 
         return mod
 
