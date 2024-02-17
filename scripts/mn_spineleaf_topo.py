@@ -3,6 +3,7 @@
 
 # Copyright (C) 2024 Maen Artimy
 
+import sys
 import yaml
 from mininet.net import Mininet
 from mininet.node import RemoteController
@@ -30,7 +31,7 @@ def create_mininet_network(config_file):
 
     info("*** Adding switches\n")
     for switch_config in config["switches"]:
-        switches[switch_config] = net.addSwitch(switch_config)
+        switches[switch_config["name"]] = net.addSwitch(switch_config["name"])
 
     info("*** Adding inter-switch links\n")
     for link_config in config["links"]:
@@ -69,10 +70,13 @@ def create_mininet_network(config_file):
     info("*** Stopping network\n")
     net.stop()
 
-
 if __name__ == "__main__":
-    # run using:
-    # sudo ./path/mn_spineleaf_topo.py
+    # Check if the command-line argument is provided
+    if len(sys.argv) < 2:
+        print("Usage: sudo ./path/mn_spineleaf_topo.py <netconfig_file>")
+        sys.exit(1)
+
+    config_file = sys.argv[1]  # Get the config file name from the command-line argument
 
     setLogLevel("info")
-    create_mininet_network("network_config.yaml")
+    create_mininet_network(config_file)

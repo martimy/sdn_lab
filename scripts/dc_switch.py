@@ -22,6 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+
+import os
+import yaml
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
@@ -46,25 +49,32 @@ class Network:
     Network definition
     """
 
-    spines = [11, 12]
-    leaves = [21, 22, 23]
-    links = {
-        (11, 21): {"port": 1},
-        (11, 22): {"port": 2},
-        (11, 23): {"port": 3},
-        (12, 21): {"port": 1},
-        (12, 22): {"port": 2},
-        (12, 23): {"port": 3},
-        (21, 11): {"port": 1},
-        (21, 12): {"port": 2},
-        (22, 11): {"port": 1},
-        (22, 12): {"port": 2},
-        (23, 11): {"port": 1},
-        (23, 12): {"port": 2},
-    }
+    def __init__(self, config_file):
+        try:
+            with open(config_file, 'r') as file:
+                config = yaml.safe_load(file)
+        except FileNotFoundError:
+            print(f"Error: Config file '{config_file}' not found.")
+            sys.exit(1)
 
+        self.spines = [
+            s["id"] for s in config["switches"] if s["type"].lower() == "spine"
+        ]
+        self.leaves = [
+            s["id"] for s in config["switches"] if s["type"].lower() == "leaf"
+        ]
 
-net = Network()
+        switch_mapping = {switch["name"]: switch["id"] for switch in config["switches"]}
+
+        self.links = {}
+        for link in config["links"]:
+            if link["source"] in switch_mapping and link["target"] in switch_mapping:
+                self.links[(switch_mapping[link["source"]], switch_mapping[link["target"]])] = {
+                                "port": link["source_port"],
+                            }
+                self.links[(switch_mapping[link["target"]], switch_mapping[link["source"]])] = {
+                                "port": link["target_port"],
+                            }
 
 
 class LearningSwitch1(BaseSwitch):
@@ -95,7 +105,7 @@ class LearningSwitch1(BaseSwitch):
         msgs = [self.del_flow(datapath)]
 
         if datapath.id in net.leaves:
-            # Add a table-miss entry for TABLE0 table to forward 
+            # Add a table-miss entry for TABLE0 table to forward
             # packets to the controller
             match = parser.OFPMatch()
             actions = [
@@ -257,3 +267,7 @@ class LearningSwitch1(BaseSwitch):
             self.add_flow(datapath, TABLE0, MID_PRIORITY, match, inst, i_time=IDLE_TIME)
         ]
         return msgs
+
+
+config_file = os.environ.get("NETWORK_CONFIG_FILE", "network_config.yaml")
+net = Network(config_file)

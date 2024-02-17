@@ -1,10 +1,20 @@
 ---
 switches:
-  - s11
-  - s12
-  - s21
-  - s22
-  - s23
+  - name: s11
+    id: 11
+    type: spine
+  - name: s12
+    id: 12
+    type: spine
+  - name: s21
+    id: 21
+    type: leaf
+  - name: s22
+    id: 22
+    type: leaf
+  - name: s23
+    id: 23
+    type: leaf
 
 hosts:
   - name: h1
