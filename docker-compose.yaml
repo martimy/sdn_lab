@@ -8,7 +8,7 @@ services:
     tty: true # Allocates a pseudo-TTY (teletypewriter) for the container
     privileged: true # required for mininet to run inside a container
     environment:
-      HISTFILE: /root/.bash_history
+      HISTFILE: /root/scripts/.bash_history
       #  DISPLAY  # Passes the value of the DISPLAY environment variable to the container
     volumes:
      - /tmp/.X11-unix:/tmp/.X11-unix    # Mounts X11 socket for GUI access
@@ -21,7 +21,7 @@ services:
     image: martimy/ryu-flowmanager
     environment:
       - NETWORK_CONFIG_FILE=scripts/network_config.yaml
-    command: "scripts/dc_switch_1.py --observe-links"
+    command: "--observe-links scripts/dc_switch_1.py"
     volumes:
      - ./scripts:/home/auser/scripts
     #ports: # not required in host network mode
