@@ -1,10 +1,24 @@
-# Docker Compose version 3
-version: '3'
-
+# Docker Compose for SDN Lab
 services:
+  # Define a service named "flowmanager"
+  flowmanager:
+    image: martimy/ryu-flowmanager
+    environment:
+      - NETWORK_CONFIG_FILE=scripts/network_config.yaml
+    command: "scripts/dc_switch_1.py --observe-links"
+    volumes:
+     - ./scripts:/home/auser/scripts
+    #ports: # not required in host network mode
+    #  - 6633:6633
+    #  - 6653:6653
+    #  - 8080:8080
+    network_mode: "host"
+
   # Define a service named "mininet"
   mininet:
     image: martimy/mininet
+    depends_on: # In this case only
+      - flowmanager  
     tty: true # Allocates a pseudo-TTY (teletypewriter) for the container
     privileged: true # required for mininet to run inside a container
     environment:
@@ -14,18 +28,4 @@ services:
      - /tmp/.X11-unix:/tmp/.X11-unix    # Mounts X11 socket for GUI access
      - /lib/modules:/lib/modules        # Mounts kernel modules from the host to the container
      - ./scripts:/root/scripts
-    network_mode: "host"
-
-  # Define a service named "flowmanager"
-  flowmanager:
-    image: martimy/ryu-flowmanager
-    environment:
-      - NETWORK_CONFIG_FILE=scripts/network_config.yaml
-    command: "--observe-links scripts/dc_switch_1.py"
-    volumes:
-     - ./scripts:/home/auser/scripts
-    #ports: # not required in host network mode
-    #  - 6633:6633
-    #  - 6653:6653
-    #  - 8080:8080
     network_mode: "host"
