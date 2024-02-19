@@ -159,8 +159,11 @@ class SpineLeaf2(DCSwitch):
 
             # If it is connected to a remote switch
             if dst_host["dpid"] in remote_switches:
-                # Select a spine switch based on src and dst MACs
-                spine_id = net.spines[hash(src + dst) % len(net.spines)]
+                # Select a spine switch based on src and dst switch IDs
+                # The selected spine must be the same in each direction
+                spine_id = net.spines[
+                    (datapath.id + dst_host["dpid"]) % len(net.spines)
+                ]
 
                 # In the originating switch,
                 # add an entry to the REMOTE_TABLE to forward packets

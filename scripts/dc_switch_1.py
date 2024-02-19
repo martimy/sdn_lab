@@ -144,8 +144,11 @@ class SpineLeaf1(DCSwitch):
                 # Nodes reside on different leaf switches
                 # Install flow entries in two leaf switches and one spine switch
 
-                # Select one spine based on the src and dst MACs
-                spine_id = net.spines[hash(src + dst) % len(net.spines)]
+                # Select one spine based on the src and dst switch IDs
+                # The spine must be the same in both directions
+                spine_id = net.spines[
+                    (datapath.id + dst_host["dpid"]) % len(net.spines)
+                ]
 
                 # In the source switch
                 upstream_port = net.links[datapath.id, spine_id]["port"]
