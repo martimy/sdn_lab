@@ -114,7 +114,7 @@ class SpineLeaf1(DCSwitch):
         dst = eth.dst
         src = eth.src
 
-        self.logger.info("Packet from %i %s %s %i", datapath.id, src, dst, in_port)
+        self.logger.debug("Packet from %i %s %s %i", datapath.id, src, dst, in_port)
 
         # Set/Update the node information in the MAC table
         # the MAC table includes the input port and input switch
@@ -144,10 +144,8 @@ class SpineLeaf1(DCSwitch):
                 # Nodes reside on different leaf switches
                 # Install flow entries in two leaf switches and one spine switch
 
-                # Select one spine
-                spine_id = net.spines[
-                    hash(datapath.id + dst_host["dpid"]) % len(net.spines)
-                ]
+                # Select one spine based on the src and dst MACs
+                spine_id = net.spines[hash(src + dst) % len(net.spines)]
 
                 # In the source switch
                 upstream_port = net.links[datapath.id, spine_id]["port"]

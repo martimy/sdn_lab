@@ -150,7 +150,7 @@ class SpineLeaf2(DCSwitch):
 
         self.send_messages(datapath, msgs)
 
-        src_host = self.update_mac_table(src, in_port, datapath.id)
+        self.update_mac_table(src, in_port, datapath.id)
         dst_host = self.mac_table.get(dst)
         remote_switches = list(set(net.leaves) - set([datapath.id]))
 
@@ -159,10 +159,8 @@ class SpineLeaf2(DCSwitch):
 
             # If it is connected to a remote switch
             if dst_host["dpid"] in remote_switches:
-                # Select a spine switch
-                spine_id = net.spines[
-                    hash(src_host["dpid"] + dst_host["dpid"]) % len(net.spines)
-                ]
+                # Select a spine switch based on src and dst MACs
+                spine_id = net.spines[hash(src + dst) % len(net.spines)]
 
                 # In the originating switch,
                 # add an entry to the REMOTE_TABLE to forward packets
@@ -206,7 +204,7 @@ class SpineLeaf2(DCSwitch):
                     dst,
                     spine_ingress_port,
                     spine_egress_port,
-                    MID_IDLE_TIME
+                    MID_IDLE_TIME,
                 )
 
                 self.send_messages(spine_datapath, msgs)
