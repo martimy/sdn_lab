@@ -28,11 +28,11 @@ def create_mininet_network():
     )
 
     info("*** Adding switches\n")
-    s11 = net.addSwitch("SW11") # Spine
-    s12 = net.addSwitch("SW12") # Spine
-    s21 = net.addSwitch("SW21") # Leaf
-    s22 = net.addSwitch("SW22") # Leaf
-    s23 = net.addSwitch("SW23") # Leaf
+    s11 = net.addSwitch("SW11")  # Spine
+    s12 = net.addSwitch("SW12")  # Spine
+    s21 = net.addSwitch("SW21")  # Leaf
+    s22 = net.addSwitch("SW22")  # Leaf
+    s23 = net.addSwitch("SW23")  # Leaf
 
     info("*** Adding hosts\n")
     h1 = net.addHost(

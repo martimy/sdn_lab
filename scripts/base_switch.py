@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Maen Artimy
+# Copyright (c) 2018-2024 Maen Artimy
 
 from ryu.base import app_manager
 from ryu.ofproto import ofproto_v1_3
@@ -32,7 +32,7 @@ class BaseSwitch(app_manager.RyuApp):
         """
 
         parser = datapath.ofproto_parser
-        mod = parser.OFPFlowMod(
+        msg = parser.OFPFlowMod(
             datapath=datapath,
             table_id=table_id,
             priority=priority,
@@ -43,8 +43,7 @@ class BaseSwitch(app_manager.RyuApp):
             match=match,
             instructions=inst,
         )
-
-        return mod
+        return msg
 
     @staticmethod
     def del_flow(
@@ -67,7 +66,7 @@ class BaseSwitch(app_manager.RyuApp):
         cookie_mask = cookie_mask if cookie_mask > -1 else 0xFFFFFFFFFFFFFFFF
 
         parser = datapath.ofproto_parser
-        mod = parser.OFPFlowMod(
+        msg = parser.OFPFlowMod(
             datapath=datapath,
             table_id=table_id,
             cookie=cookie,
@@ -77,8 +76,28 @@ class BaseSwitch(app_manager.RyuApp):
             out_port=out_port,
             out_group=out_group,
         )
+        return msg
 
-        return mod
+    @staticmethod
+    def forward_packet(datapath, data, in_port, out_port):
+        """
+        Returns a PACKET_OUT message that sends a packet to a swith
+        """
+
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+
+        actions = [parser.OFPActionOutput(out_port)]
+        msg = [
+            parser.OFPPacketOut(
+                datapath=datapath,
+                buffer_id=ofproto.OFP_NO_BUFFER,
+                in_port=in_port,
+                actions=actions,
+                data=data,
+            )
+        ]
+        return msg
 
     @staticmethod
     def send_messages(datapath, msg_list, barrier=False):

@@ -70,6 +70,7 @@ def create_mininet_network(config_file):
     info("*** Stopping network\n")
     net.stop()
 
+
 if __name__ == "__main__":
     # Check if the command-line argument is provided
     if len(sys.argv) < 2:
