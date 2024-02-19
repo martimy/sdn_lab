@@ -25,7 +25,7 @@ RUN apt-get update \
     && touch /etc/network/interfaces \
     && chmod +x /ENTRYPOINT.sh
 
-RUN pip3 install mininet
+RUN pip3 install mininet pyaml
 
 EXPOSE 6633 6653 6640
 

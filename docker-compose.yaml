@@ -19,13 +19,13 @@ services:
   # Define a service named "flowmanager"
   flowmanager:
     image: martimy/ryu-flowmanager
-#    environment:
-#      - NETWORK_CONFIG_FILE="scripts/network_config.yaml"
-    command: "${CTRL_ARGS}" # example: scripts/learning_switch_2.py
+    environment:
+      - NETWORK_CONFIG_FILE=scripts/network_config.yaml
+    command: "scripts/dc_switch_2.py --observe-links"
     volumes:
      - ./scripts:/home/auser/scripts
-    ports:
-      - 6633:6633
-      - 6653:6653
-      - 8080:8080
+    #ports: # not required in host network mode
+    #  - 6633:6633
+    #  - 6653:6653
+    #  - 8080:8080
     network_mode: "host"
