@@ -1,5 +1,0 @@
-#!/bin/bash
-clear
-pkill -9 ryu-manager
-echo "Starting Ryu..."
-ryu-manager --verbose ~/flowmanager/flowmanager.py $1
