@@ -171,7 +171,7 @@ class SpineLeaf2(DCSwitch):
             if dst_host["dpid"] in remote_switches:
                 # Select a spine switch based on packet info
                 # The selected spine must be the same in each direction
-                IP_PACKET = pkt_info[0] != 0
+                IP_PACKET = all(pkt_info) # all items must be > 0
                 spine_idx = (
                     self.select_spine_from_ip(pkt_info, len(net.spines))
                     if IP_PACKET
@@ -216,16 +216,27 @@ class SpineLeaf2(DCSwitch):
                 spine_ingress_port = net.links[spine_id, datapath.id]["port"]
                 spine_egress_port = net.links[spine_id, dst_datapath.id]["port"]
 
-                msgs = self.make_dual_connections(
-                    spine_datapath,
-                    ENTRY_TABLE,
-                    LOW_PRIORITY,
-                    src,
-                    dst,
-                    spine_ingress_port,
-                    spine_egress_port,
-                    MID_IDLE_TIME,
-                )
+                if IP_PACKET:
+                    msgs = self.make_dual_connections_for_ip_packet(
+                        spine_datapath,
+                        ENTRY_TABLE,
+                        MID_PRIORITY,
+                        pkt_info,
+                        spine_ingress_port,
+                        spine_egress_port,
+                        MID_IDLE_TIME,
+                    )                
+                else:
+                    msgs = self.make_dual_connections(
+                        spine_datapath,
+                        ENTRY_TABLE,
+                        LOW_PRIORITY,
+                        src,
+                        dst,
+                        spine_ingress_port,
+                        spine_egress_port,
+                        MID_IDLE_TIME,
+                    )
                 self.send_messages(spine_datapath, msgs)
 
                 # In the remote switch,
@@ -302,6 +313,54 @@ class SpineLeaf2(DCSwitch):
 
         return msg
 
+    def make_dual_connections_for_ip_packet(
+        self,
+        datapath,
+        table,
+        priority,
+        packet_info,
+        in_port,
+        out_port,
+        i_time,
+    ):
+        """
+        Returns MOD messages to add two flow entries allowing packets between
+        two nodes
+        """
+
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+
+        src_ip, src_port, dst_ip, dst_port = packet_info
+
+
+        match = parser.OFPMatch(
+            in_port=in_port,
+            eth_type=0x0800,
+            ipv4_src=src_ip,
+            ipv4_dst=dst_ip,
+            ip_proto=6,
+            tcp_src=src_port,
+            tcp_dst=dst_port,
+        )
+        actions = [parser.OFPActionOutput(out_port)]
+        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+        msgs = [self.add_flow(datapath, table, priority, match, inst, i_time=i_time)]
+
+        match = parser.OFPMatch(
+            in_port=out_port,
+            eth_type=0x0800,
+            ipv4_src=dst_ip,
+            ipv4_dst=src_ip,
+            ip_proto=6,
+            tcp_src=dst_port,
+            tcp_dst=src_port,
+        )
+        actions = [parser.OFPActionOutput(in_port)]
+        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+        msgs += [self.add_flow(datapath, table, priority, match, inst, i_time=i_time)]
+        return msgs
+        
     def get_packet_info(self, pkt):
         """Get packet higher layer information"""
 
