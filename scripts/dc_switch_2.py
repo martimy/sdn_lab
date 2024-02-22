@@ -169,7 +169,6 @@ class SpineLeaf2(DCSwitch):
                 # add an entry to the REMOTE_TABLE to forward packets
                 # from the source to the destination towards the spine switch
 
-                # in_port = net.links[datapath.id, spine_id]["port"]
                 upstream_port = net.links[datapath.id, spine_id]["port"]
 
                 match = parser.OFPMatch(eth_src=src, eth_dst=dst)
@@ -209,31 +208,10 @@ class SpineLeaf2(DCSwitch):
                     spine_egress_port,
                     MID_IDLE_TIME,
                 )
-
                 self.send_messages(spine_datapath, msgs)
 
                 # In the remote switch,
-                # add an entry to the REMOTE_TABLE to forward packets
-                # from the destination to the source towards the spine switch
-
-                downstream_port = net.links[dst_datapath.id, spine_id]["port"]
-                match = parser.OFPMatch(eth_src=dst, eth_dst=src)
-                actions = [parser.OFPActionOutput(downstream_port)]
-                inst = [
-                    parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)
-                ]
-                msgs += [
-                    self.add_flow(
-                        datapath,
-                        REMOTE_TABLE,
-                        LOW_PRIORITY,
-                        match,
-                        inst,
-                        i_time=IDLE_TIME,
-                    )
-                ]
-
-                # Finally, send the received packet to the destination switch
+                # Send the received packet to the destination switch
                 # to forward it.
                 remote_port = dst_host["port"]
                 msgs = self.forward_packet(

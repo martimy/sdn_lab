@@ -44,6 +44,7 @@ REMOTE_TABLE = 1
 
 MIN_PRIORITY = 0
 LOW_PRIORITY = 100
+MID_PRIORITY = 300
 
 
 # Set idle_time=0 to make flow entries permenant
@@ -132,7 +133,7 @@ class SpineLeaf2(DCSwitch):
 
         # Get the packet source and destination MAC addresses
         dst = eth.dst
-        src = eth.src        
+        src = eth.src
 
         self.logger.info(
             f"PACKET IN from switch {datapath.id} port {in_port}, Details: src={src} dst={dst}"
@@ -143,7 +144,7 @@ class SpineLeaf2(DCSwitch):
         self.logger.info(
             f"Packet Info: {pkt_info[0]}, {pkt_info[1]} - {pkt_info[2]}, {pkt_info[3]}"
         )
-        
+
         # In the originating switch:
 
         # Add a flow entry in LOCAL_TABLE to forward packets to the given
@@ -170,14 +171,13 @@ class SpineLeaf2(DCSwitch):
             if dst_host["dpid"] in remote_switches:
                 # Select a spine switch based on packet info
                 # The selected spine must be the same in each direction
-                if packet_info[0]:
-                    spine_id self.select_spine_from_ipv4(packet_info, len(net.spines))
-                else:
-                    spine_id self.select_spine_from_ipv4(packet_info, len(net.spines))
-                
-                spine_id = net.spines[
-                    (datapath.id + dst_host["dpid"]) % len(net.spines)
-                ]
+                IP_PACKET = pkt_info[0] != 0
+                spine_idx = (
+                    self.select_spine_from_ip(pkt_info, len(net.spines))
+                    if IP_PACKET
+                    else self.select_spine_from_eth(src, dst, len(net.spines))
+                )
+                spine_id = net.spines[spine_idx]
 
                 # In the originating switch,
                 # add an entry to the REMOTE_TABLE to forward packets
@@ -186,22 +186,25 @@ class SpineLeaf2(DCSwitch):
                 # in_port = net.links[datapath.id, spine_id]["port"]
                 upstream_port = net.links[datapath.id, spine_id]["port"]
 
-                match = parser.OFPMatch(eth_src=src, eth_dst=dst)
-                actions = [parser.OFPActionOutput(upstream_port)]
-                inst = [
-                    parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)
-                ]
-                msgs += [
-                    self.add_flow(
+                if IP_PACKET:
+                    msgs = self.create_match_entry_for_ip_packet(
+                        datapath,
+                        REMOTE_TABLE,
+                        MID_PRIORITY,
+                        IDLE_TIME,
+                        pkt_info,
+                        upstream_port,
+                    )
+                else:
+                    msgs = self.create_match_entry(
                         datapath,
                         REMOTE_TABLE,
                         LOW_PRIORITY,
-                        match,
-                        inst,
-                        i_time=IDLE_TIME,
+                        IDLE_TIME,
+                        src,
+                        dst,
+                        upstream_port,
                     )
-                ]
-
                 self.send_messages(datapath, msgs)
 
                 # In the spine switch,
@@ -223,31 +226,10 @@ class SpineLeaf2(DCSwitch):
                     spine_egress_port,
                     MID_IDLE_TIME,
                 )
-
                 self.send_messages(spine_datapath, msgs)
 
                 # In the remote switch,
-                # add an entry to the REMOTE_TABLE to forward packets
-                # from the destination to the source towards the spine switch
-
-                downstream_port = net.links[dst_datapath.id, spine_id]["port"]
-                match = parser.OFPMatch(eth_src=dst, eth_dst=src)
-                actions = [parser.OFPActionOutput(downstream_port)]
-                inst = [
-                    parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)
-                ]
-                msgs += [
-                    self.add_flow(
-                        datapath,
-                        REMOTE_TABLE,
-                        LOW_PRIORITY,
-                        match,
-                        inst,
-                        i_time=IDLE_TIME,
-                    )
-                ]
-
-                # Finally, send the received packet to the destination switch
+                # Send the received packet to the destination switch
                 # to forward it.
                 remote_port = dst_host["port"]
                 msgs = self.forward_packet(
@@ -267,9 +249,62 @@ class SpineLeaf2(DCSwitch):
 
                 self.send_messages(dpath, msgs)
 
+    def create_match_entry_for_ip_packet(
+        self, datapath, table, priority, idle_time, packet_info, out_port
+    ):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+
+        src_ip, src_port, dst_ip, dst_port = packet_info
+
+        match = parser.OFPMatch(
+            eth_type=0x0800,
+            ipv4_src=src_ip,
+            ipv4_dst=dst_ip,
+            ip_proto=6,
+            tcp_src=src_port,
+            tcp_dst=dst_port,
+        )
+        actions = [parser.OFPActionOutput(out_port)]
+        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+        msg = [
+            self.add_flow(
+                datapath,
+                table,
+                priority,
+                match,
+                inst,
+                i_time=idle_time,
+            )
+        ]
+
+        return msg
+
+    def create_match_entry(
+        self, datapath, table, priority, idle_time, src, dst, out_port
+    ):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+
+        match = parser.OFPMatch(eth_src=src, eth_dst=dst)
+        actions = [parser.OFPActionOutput(out_port)]
+        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+        msg = [
+            self.add_flow(
+                datapath,
+                table,
+                priority,
+                match,
+                inst,
+                i_time=idle_time,
+            )
+        ]
+
+        return msg
+
     def get_packet_info(self, pkt):
         """Get packet higher layer information"""
-        
+
         ip_pkt = pkt.get_protocol(ipv4.ipv4)
         src_ip = ip_pkt.src if ip_pkt else 0
         dst_ip = ip_pkt.dst if ip_pkt else 0
@@ -279,6 +314,21 @@ class SpineLeaf2(DCSwitch):
         dst_port = tcp_udp_pkt.dst_port if tcp_udp_pkt else 0
 
         return src_ip, src_port, dst_ip, dst_port
-         
+
+    def select_spine_from_ip(self, packet_info, num_spines):
+        """Select spine switch based source and destination IP addresses
+        and TCP/UDP port numbers"""
+        src_ip, src_port, dst_ip, dst_port = packet_info
+        srcip_as_num = sum(map(int, src_ip.split(".")))
+        dstip_as_num = sum(map(int, dst_ip.split(".")))
+        return (srcip_as_num + dstip_as_num + src_port + dst_port) % num_spines
+
+    def select_spine_from_eth(self, src, dst, num_spines):
+        """Select spine switch based source and destination MAC addresses"""
+        src_as_num = sum(map(int, src.split(":")))
+        dst_as_num = sum(map(int, dst.split(":")))
+        return (src_as_num + dst_as_num) % num_spines
+
+
 config_file = os.environ.get("NETWORK_CONFIG_FILE", "network_config.yaml")
 net = Network(config_file)
