@@ -32,7 +32,7 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.app.ofctl.api import get_datapath
-from base_switch_dc import DCSwitch
+from base_switch import BaseSwitch
 from utils import Network
 
 # Constants
@@ -44,7 +44,7 @@ LOW_PRIORITY = 100
 IDLE_TIME = 30
 
 
-class SpineLeaf1(DCSwitch):
+class SpineLeaf1(BaseSwitch):
     """
     A spine-leaf implementation with one table using static network description.
     """
@@ -53,6 +53,12 @@ class SpineLeaf1(DCSwitch):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Create central MAC table
+        self.mac_table = {}
+
+        # Ignore these packet types
+        self.ignore = [ether_types.ETH_TYPE_LLDP, ether_types.ETH_TYPE_IPV6]
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, event):
@@ -215,6 +221,45 @@ class SpineLeaf1(DCSwitch):
                     dpath, event.msg.data, in_port, ofproto.OFPP_ALL
                 )
                 self.send_messages(dpath, msgs)
+
+    def update_mac_table(self, src, port, dpid):
+        # Set/Update the node information in the MAC table
+        # the MAC table includes the input port and input switch
+        src_host = self.mac_table.get(src, {})
+        src_host["port"] = port
+        src_host["dpid"] = dpid
+        self.mac_table[src] = src_host
+        return src_host
+
+    def make_dual_connections(
+        self,
+        datapath,
+        table,
+        priority,
+        src,
+        dst,
+        in_port,
+        out_port,
+        i_time,
+    ):
+        """
+        Returns MOD messages to add two flow entries allowing packets between
+        two nodes
+        """
+
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+
+        match = parser.OFPMatch(in_port=in_port, eth_src=src, eth_dst=dst)
+        actions = [parser.OFPActionOutput(out_port)]
+        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+        msgs = [self.add_flow(datapath, table, priority, match, inst, i_time=i_time)]
+
+        # match = parser.OFPMatch(in_port=out_port, eth_src=dst, eth_dst=src)
+        # actions = [parser.OFPActionOutput(in_port)]
+        # inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+        # msgs += [self.add_flow(datapath, table, priority, match, inst, i_time=i_time)]
+        return msgs
 
 
 config_file = os.environ.get("NETWORK_CONFIG_FILE", "network_config.yaml")
