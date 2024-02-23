@@ -132,7 +132,7 @@ class SpineLeaf2(BaseSwitch):
         src = eth.src
 
         self.logger.info(
-            f"PACKET IN from switch {datapath.id} port {in_port}, Details: src={src} dst={dst}"
+            f"PACKET IN from switch {datapath.id} port {in_port}, type={eth.ethertype} src={src} dst={dst}"
         )
 
         # In the originating switch:
@@ -170,23 +170,15 @@ class SpineLeaf2(BaseSwitch):
                 # from the source to the destination towards the spine switch
 
                 upstream_port = net.links[datapath.id, spine_id]["port"]
-
-                match = parser.OFPMatch(eth_src=src, eth_dst=dst)
-                actions = [parser.OFPActionOutput(upstream_port)]
-                inst = [
-                    parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)
-                ]
-                msgs += [
-                    self.add_flow(
-                        datapath,
-                        REMOTE_TABLE,
-                        LOW_PRIORITY,
-                        match,
-                        inst,
-                        i_time=IDLE_TIME,
-                    )
-                ]
-
+                msgs += self.create_match_entry_at_leaf(
+                    datapath,
+                    REMOTE_TABLE,
+                    LOW_PRIORITY,
+                    IDLE_TIME,
+                    src,
+                    dst,
+                    upstream_port,
+                )
                 self.send_messages(datapath, msgs)
 
                 # In the spine switch,
@@ -198,7 +190,7 @@ class SpineLeaf2(BaseSwitch):
                 spine_ingress_port = net.links[spine_id, datapath.id]["port"]
                 spine_egress_port = net.links[spine_id, dst_datapath.id]["port"]
 
-                msgs = self.make_dual_connections(
+                msgs = self.create_match_entry_at_spine(
                     spine_datapath,
                     ENTRY_TABLE,
                     LOW_PRIORITY,
@@ -240,7 +232,28 @@ class SpineLeaf2(BaseSwitch):
         self.mac_table[src] = src_host
         return src_host
 
-    def make_dual_connections(
+    def create_match_entry_at_leaf(
+        self, datapath, table, priority, idle_time, src, dst, out_port
+    ):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+
+        match = parser.OFPMatch(eth_src=src, eth_dst=dst)
+        actions = [parser.OFPActionOutput(out_port)]
+        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
+        msgs = [
+            self.add_flow(
+                datapath,
+                table,
+                priority,
+                match,
+                inst,
+                i_time=idle_time,
+            )
+        ]
+        return msgs
+
+    def create_match_entry_at_spine(
         self,
         datapath,
         table,
@@ -252,8 +265,7 @@ class SpineLeaf2(BaseSwitch):
         i_time,
     ):
         """
-        Returns MOD messages to add two flow entries allowing packets between
-        two nodes
+        Returns a MOD message to add a flow entry at spine switch
         """
 
         ofproto = datapath.ofproto
@@ -264,10 +276,6 @@ class SpineLeaf2(BaseSwitch):
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
         msgs = [self.add_flow(datapath, table, priority, match, inst, i_time=i_time)]
 
-        # match = parser.OFPMatch(in_port=out_port, eth_src=dst, eth_dst=src)
-        # actions = [parser.OFPActionOutput(in_port)]
-        # inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
-        # msgs += [self.add_flow(datapath, table, priority, match, inst, i_time=i_time)]
         return msgs
 
 

@@ -120,7 +120,7 @@ class SpineLeaf1(BaseSwitch):
         dst = eth.dst
         src = eth.src
 
-        self.logger.debug("Packet from %i %s %s %i", datapath.id, src, dst, in_port)
+        self.logger.info("Packet from %i %s %s %i", datapath.id, src, dst, in_port)
 
         # Set/Update the node information in the MAC table
         # the MAC table includes the input port and input switch
@@ -135,7 +135,7 @@ class SpineLeaf1(BaseSwitch):
                 msgs = self.forward_packet(datapath, event.msg.data, in_port, out_port)
 
                 # Both nodes are connected to the same leaf switch
-                msgs += self.make_dual_connections(
+                msgs += self.create_match_entry(
                     datapath,
                     TABLE0,
                     LOW_PRIORITY,
@@ -158,7 +158,7 @@ class SpineLeaf1(BaseSwitch):
 
                 # In the source switch
                 upstream_port = net.links[datapath.id, spine_id]["port"]
-                msgs = self.make_dual_connections(
+                msgs = self.create_match_entry(
                     datapath,
                     TABLE0,
                     LOW_PRIORITY,
@@ -177,7 +177,7 @@ class SpineLeaf1(BaseSwitch):
                 spine_ingress_port = net.links[spine_id, datapath.id]["port"]
                 spine_egress_port = net.links[spine_id, dst_datapath.id]["port"]
 
-                msgs = self.make_dual_connections(
+                msgs = self.create_match_entry(
                     spine_datapath,
                     TABLE0,
                     LOW_PRIORITY,
@@ -197,7 +197,7 @@ class SpineLeaf1(BaseSwitch):
                 )
 
                 downstream_port = net.links[dst_datapath.id, spine_id]["port"]
-                msgs += self.make_dual_connections(
+                msgs += self.create_match_entry(
                     dst_datapath,
                     TABLE0,
                     LOW_PRIORITY,
@@ -231,7 +231,7 @@ class SpineLeaf1(BaseSwitch):
         self.mac_table[src] = src_host
         return src_host
 
-    def make_dual_connections(
+    def create_match_entry(
         self,
         datapath,
         table,
@@ -243,7 +243,7 @@ class SpineLeaf1(BaseSwitch):
         i_time,
     ):
         """
-        Returns MOD messages to add two flow entries allowing packets between
+        Returns MOD messages to a flow entry allowing packets between
         two nodes
         """
 
@@ -255,10 +255,6 @@ class SpineLeaf1(BaseSwitch):
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
         msgs = [self.add_flow(datapath, table, priority, match, inst, i_time=i_time)]
 
-        # match = parser.OFPMatch(in_port=out_port, eth_src=dst, eth_dst=src)
-        # actions = [parser.OFPActionOutput(in_port)]
-        # inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
-        # msgs += [self.add_flow(datapath, table, priority, match, inst, i_time=i_time)]
         return msgs
 
 
