@@ -8,10 +8,6 @@ services:
     command: "scripts/dc_switch_3.py --observe-links"
     volumes:
      - ./scripts:/home/auser/scripts
-    #ports: # not required in host network mode
-    #  - 6633:6633
-    #  - 6653:6653
-    #  - 8080:8080
     network_mode: "host"
 
   # Define a service named "mininet"
