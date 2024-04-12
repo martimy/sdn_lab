@@ -9,11 +9,13 @@ RUN apt-get update \
         curl \
         dnsutils \
         ifupdown \
+        iperf3 \
         iproute2 \
         iptables \
         iputils-ping \
         mininet \
         nano \
+        netcat \
         net-tools \
         openvswitch-switch \
         python3-pip \
