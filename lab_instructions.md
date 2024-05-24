@@ -14,7 +14,7 @@ The Network
 
 This lab environment consists of five OpenFlow switches (created using Open vSwitch), a controller (Ryu) and six hosts (servers). The Mininet emulator creates the switches and hosts, resulting in the network topology shown below.
  
-![Figure 1 Lab Topology.]()
+![Figure 1 Lab Topology.](SDN_SpineLeaf.drowio.png)
 
 ### OpenFlow Switch Operation
 
