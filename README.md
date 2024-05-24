@@ -1,6 +1,6 @@
 # SDN Lab
 
-This repository contains the files and scripts for setting up a software-defined networking (SDN) lab using Mininet, Ryu controller, and FlowManager in Docker containers.
+This repository contains the files and scripts for setting up a software-defined networking (SDN) lab using [Mininet](https://mininet.org/), [Ryu](https://ryu-sdn.org/) controller, and [FlowManager](https://github.com/martimy/flowmanager) in [Docker](https://www.docker.com/) containers.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ This repository contains the files and scripts for setting up a software-defined
 - Open a web browser and go to `http://localhost:8080/home/` to access the FlowManager web interface
 - To stop the containers, run `docker compose down` from the root directory of the repository
 
-Note: you may need to follow other instructions (elsewhere) to use specific lab code.
+For complete lab instructions consult this [document](lab_instructions.md).
 
 ## License
 
