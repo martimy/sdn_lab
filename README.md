@@ -15,6 +15,14 @@ This repository contains the files and scripts for setting up a software-defined
 - Open a web browser and go to `http://localhost:8080/home/` to access the FlowManager web interface
 - To stop the containers, run `docker compose down` from the root directory of the repository
 
+```bash
+$ git clone https://github.com/martimy/sdn_lab sdn
+$ cd sdn
+sdn$ docker compose up -d
+...
+sdn$ docker compose down
+```
+
 For complete lab instructions consult this [document](lab_instructions.md).
 
 ## License
