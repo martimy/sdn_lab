@@ -38,8 +38,11 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
     def setup_graphite(self):
         server = os.getenv('GRAPHITE_SERVER', '127.0.0.1')
         prefix = os.getenv('GRAPHITE_PREFIX', 'ryu.monitor')
-        self.polltime = os.getenv('GRAPHITE_POLLTIME', 30)
+        polltime_str = os.getenv('GRAPHITE_POLLTIME', '30.0')
+        self.polltime = float(polltime_str)
+        self.logger.info(f"Type {type(self.polltime)} ")
         graphyte.init(server, prefix=prefix)
+        self.logger.info(f"Sending telemetry '{prefix}' to server '{server}' every {self.polltime} sec.")
 
     @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, DEAD_DISPATCHER])
     def _state_change_handler(self, ev):
