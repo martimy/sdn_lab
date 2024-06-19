@@ -13,7 +13,7 @@ In a Spine-Leaf architecture, Software-Defined Networking (SDN) can be used to a
 The Network
 
 This lab environment consists of five OpenFlow switches (created using Open vSwitch), a controller (Ryu) and six hosts (servers). The Mininet emulator creates the switches and hosts, resulting in the network topology shown below.
- 
+
 ![Figure 1 Lab Topology.](SDN_SpineLeaf.drawio.png)
 
 ### OpenFlow Switch Operation
@@ -67,10 +67,15 @@ Follow the following steps to run an application:
 
     ```bash
     $ docker compose exec -it mininet bash
-    From inside the container create the network topology described in the file ‘network_config.yaml.’ 
+    From inside the container create the network topology described in the file ‘network_config.yaml.’
     ~# ./scripts/mn_spineleaf_topo.py scripts/network_config.yaml
     ```
 
+   Or, without entering the container:
+
+   ```bash
+   $ docker compose exec -it mininet ./scripts/mn_spineleaf_topo.py scripts/network_config.yaml
+   ```
 
 5. At the Mininet prompt, ping between all hosts using "pingall" command. Your ping should be successful.
 
@@ -87,6 +92,3 @@ Follow the following steps to run an application:
     ```
 
 6. Point your browser to `http://localhost:8080/home/` and confirm the network topology using the FlowManager's Topology view. You should see five switches and six hosts.
-
-
-
