@@ -3,11 +3,6 @@
 
 FROM alpine:3.13
 
-# Define ENV to be used by some apps
-ENV GRAPHITE_SERVER=127.0.0.1
-ENV GRAPHITE_PREFIX=ryu.monitor
-ENV GRAPHITE_POLLTIME=30
-
 # Add packages
 RUN apk upgrade --update --no-cache &&\
 apk --update --no-cache add python3 python3-dev py3-pip build-base git
