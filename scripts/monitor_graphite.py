@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Modified by Maen Artimy on 2024
+# Modified by Maen Artimy on 2024-06-19
 
 
 import os
@@ -36,24 +36,26 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         self.setup_graphite()
 
     def setup_graphite(self):
-        server = os.getenv('GRAPHITE_SERVER', '127.0.0.1')
-        prefix = os.getenv('GRAPHITE_PREFIX', 'ryu.monitor')
-        polltime_str = os.getenv('GRAPHITE_POLLTIME', '30.0')
+        server = os.getenv("GRAPHITE_SERVER", "127.0.0.1")
+        prefix = os.getenv("GRAPHITE_PREFIX", "ryu.monitor")
+        polltime_str = os.getenv("GRAPHITE_POLLTIME", "30.0")
         self.polltime = float(polltime_str)
         self.logger.info(f"Type {type(self.polltime)} ")
         graphyte.init(server, prefix=prefix)
-        self.logger.info(f"Sending telemetry '{prefix}' to server '{server}' every {self.polltime} sec.")
+        self.logger.info(
+            f"Sending telemetry '{prefix}' to server '{server}' every {self.polltime} sec."
+        )
 
     @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, DEAD_DISPATCHER])
     def _state_change_handler(self, ev):
         datapath = ev.datapath
         if ev.state == MAIN_DISPATCHER:
             if datapath.id not in self.datapaths:
-                self.logger.debug('register datapath: %016x', datapath.id)
+                self.logger.debug("register datapath: %016x", datapath.id)
                 self.datapaths[datapath.id] = datapath
         elif ev.state == DEAD_DISPATCHER:
             if datapath.id in self.datapaths:
-                self.logger.debug('unregister datapath: %016x', datapath.id)
+                self.logger.debug("unregister datapath: %016x", datapath.id)
                 del self.datapaths[datapath.id]
 
     def _monitor(self):
@@ -63,7 +65,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
             hub.sleep(self.polltime)
 
     def _request_stats(self, datapath):
-        self.logger.debug('send stats request: %016x', datapath.id)
+        self.logger.debug("send stats request: %016x", datapath.id)
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
@@ -78,22 +80,42 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         body = ev.msg.body
 
         self.logger.info("Sending flow stats to Graphite")
-        for stat in sorted([flow for flow in body if flow.priority == 1], key=lambda flow: (flow.match['in_port'], flow.match['eth_dst'])):
+        for stat in sorted(
+            [flow for flow in body if flow.priority == 1],
+            key=lambda flow: (flow.match["in_port"], flow.match["eth_dst"]),
+        ):
             # Send data to Graphite
-            graphyte.send(f'{ev.msg.datapath.id}.flow.{stat.match["in_port"]}.{stat.match["eth_dst"]}.packets', stat.packet_count)
-            graphyte.send(f'{ev.msg.datapath.id}.flow.{stat.match["in_port"]}.{stat.match["eth_dst"]}.bytes', stat.byte_count)
+            graphyte.send(
+                f'{ev.msg.datapath.id}.flow.{stat.match["in_port"]}.{stat.match["eth_dst"]}.packets',
+                stat.packet_count,
+            )
+            graphyte.send(
+                f'{ev.msg.datapath.id}.flow.{stat.match["in_port"]}.{stat.match["eth_dst"]}.bytes',
+                stat.byte_count,
+            )
 
     @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
     def _port_stats_reply_handler(self, ev):
         body = ev.msg.body
 
         self.logger.info("Sending port stats to Graphite")
-        for stat in sorted(body, key=attrgetter('port_no')):
+        for stat in sorted(body, key=attrgetter("port_no")):
             # Send data to Graphite
-            graphyte.send(f'{ev.msg.datapath.id}.port.{stat.port_no}.rx_packets', stat.rx_packets)
-            graphyte.send(f'{ev.msg.datapath.id}.port.{stat.port_no}.rx_bytes', stat.rx_bytes)
-            graphyte.send(f'{ev.msg.datapath.id}.port.{stat.port_no}.rx_errors', stat.rx_errors)
-            graphyte.send(f'{ev.msg.datapath.id}.port.{stat.port_no}.tx_packets', stat.tx_packets)
-            graphyte.send(f'{ev.msg.datapath.id}.port.{stat.port_no}.tx_bytes', stat.tx_bytes)
-            graphyte.send(f'{ev.msg.datapath.id}.port.{stat.port_no}.tx_errors', stat.tx_errors)
-
+            graphyte.send(
+                f"{ev.msg.datapath.id}.port.{stat.port_no}.rx_packets", stat.rx_packets
+            )
+            graphyte.send(
+                f"{ev.msg.datapath.id}.port.{stat.port_no}.rx_bytes", stat.rx_bytes
+            )
+            graphyte.send(
+                f"{ev.msg.datapath.id}.port.{stat.port_no}.rx_errors", stat.rx_errors
+            )
+            graphyte.send(
+                f"{ev.msg.datapath.id}.port.{stat.port_no}.tx_packets", stat.tx_packets
+            )
+            graphyte.send(
+                f"{ev.msg.datapath.id}.port.{stat.port_no}.tx_bytes", stat.tx_bytes
+            )
+            graphyte.send(
+                f"{ev.msg.datapath.id}.port.{stat.port_no}.tx_errors", stat.tx_errors
+            )
