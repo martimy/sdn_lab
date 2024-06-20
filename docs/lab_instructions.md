@@ -92,3 +92,42 @@ Follow the following steps to run an application:
     ```
 
 6. Point your browser to `http://localhost:8080/home/` and confirm the network topology using the FlowManager's Topology view. You should see five switches and six hosts.
+
+
+## Using Graphite
+
+To send switches telemetry to Graphite, we will need to use and application `monitor_graphite.py` with any other applications such as `learning_switch_2.py` (the dc_switch_x.py apps have not been tested yet):
+
+1. Edit the Docker compose file `docker-compose.yaml` to add the app:
+
+    ```bash
+    # Docker Compose for SDN Lab
+    services:
+      # Define a "flowmanager" service
+      flowmanager:
+        image: martimy/ryu-flowmanager
+        environment:
+          - NETWORK_CONFIG_FILE=scripts/network_config.yaml
+        command: "scripts/learning_switch_2.py scripts/monitor_graphite.py --observe-links"
+        ...
+    ```
+
+2. Start the containers in the background:
+
+    ```bash
+    $ docker compose up -d
+    ```
+
+3. Create the topology using Mininet:
+
+    ```bash
+    $ docker compose exec -it mininet ./scripts/mn_threeswitch_topo.py
+    ```
+
+4. Flow and port counters will be sent to Graphite. Point you browser to `localhost:9000` and select the metrics labeled `ryu.monitor`.
+
+5. You can use `Iperf3` to generate traffic between nodes (edit the python code to change the traffic generation parameters):
+
+   ```bash
+   mininet> py exec(open('scripts/traffic_gen.py').read())
+   ```
