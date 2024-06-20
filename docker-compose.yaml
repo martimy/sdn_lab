@@ -1,7 +1,7 @@
 # Docker Compose for SDN Lab
 services:
-  # Define a "flowmanager" service
-  flowmanager:
+  # Define a "controller" service
+  controller:
     image: martimy/ryu-flowmanager
     environment:
       - NETWORK_CONFIG_FILE=scripts/network_config.yaml
@@ -17,11 +17,11 @@ services:
   mininet:
     image: martimy/mininet
     depends_on: # In this case only
-      - flowmanager  
+      - controller
     tty: true # Allocates a pseudo-TTY (teletypewriter) for the container
     privileged: true # required for mininet to run inside a container
     environment:
-      SDN_CONTROLLER: flowmanager
+      SDN_CONTROLLER: controller
       HISTFILE: /root/scripts/.bash_history
       #  DISPLAY  # Passes the value of the DISPLAY environment variable to the container
     volumes:

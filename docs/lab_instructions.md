@@ -41,8 +41,10 @@ Follow the following steps to run an application:
     $ cd sdn
     $ cat docker-compose.yaml
 
-      # Define a service named "flowmanager"
-      flowmanager:
+    # Docker Compose for SDN Lab
+    services:
+      # Define a "controller" service
+      controller:
         image: martimy/ryu-flowmanager
         environment:
           - NETWORK_CONFIG_FILE=scripts/network_config.yaml
@@ -57,10 +59,10 @@ Follow the following steps to run an application:
     $ docker compose up -d
     ```
 
-3. Docker will start two containers. The flowmanager container runs the SDN controller (Ryu), the FlowManager application, which is a GUI for the controller, and the Python application `dc_switch_1.py`, which manages the switches. You can verify the controller has started successfully by checking the logs:
+3. Docker will start two containers. The controller container runs the SDN controller (Ryu), the FlowManager application, which is a GUI for the controller, and the Python application `dc_switch_1.py`, which manages the switches. You can verify the controller has started successfully by checking the logs:
 
     ```bash
-    $ docker compose logs flowmanager
+    $ docker compose logs controller
     ```
 
 4. Next, you need to use Mininet from inside the Mininet container to create the data centre topology and interact with the hosts to send and receive traffic. Enter the mininet container using the following command:
@@ -103,8 +105,8 @@ To send switches telemetry to Graphite, we will need to use and application `mon
     ```bash
     # Docker Compose for SDN Lab
     services:
-      # Define a "flowmanager" service
-      flowmanager:
+      # Define a "controller" service
+      controller:
         image: martimy/ryu-flowmanager
         environment:
           - NETWORK_CONFIG_FILE=scripts/network_config.yaml
