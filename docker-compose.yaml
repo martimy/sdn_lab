@@ -8,7 +8,10 @@ services:
     command: "scripts/dc_switch_1.py --observe-links"
     volumes:
      - ./scripts:/home/auser/scripts
-    network_mode: "host"
+    ports:
+     - "6653:6653"  # Controller port
+     - "6633:6633"  # Controller port
+     - "8080:8080"  # GUI port
 
   # Define a "mininet" service
   mininet:
@@ -18,13 +21,13 @@ services:
     tty: true # Allocates a pseudo-TTY (teletypewriter) for the container
     privileged: true # required for mininet to run inside a container
     environment:
+      SDN_CONTROLLER: flowmanager
       HISTFILE: /root/scripts/.bash_history
       #  DISPLAY  # Passes the value of the DISPLAY environment variable to the container
     volumes:
      - /tmp/.X11-unix:/tmp/.X11-unix    # Mounts X11 socket for GUI access
      - /lib/modules:/lib/modules        # Mounts kernel modules from the host to the container
      - ./scripts:/root/scripts
-    network_mode: "host"
 
   # Define a "Graphite" service
   graphite:
