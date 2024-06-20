@@ -1,6 +1,6 @@
 # Docker Compose for SDN Lab
 services:
-  # Define a service named "flowmanager"
+  # Define a "flowmanager" service
   flowmanager:
     image: martimy/ryu-flowmanager
     environment:
@@ -10,7 +10,7 @@ services:
      - ./scripts:/home/auser/scripts
     network_mode: "host"
 
-  # Define a service named "mininet"
+  # Define a "mininet" service
   mininet:
     image: martimy/mininet
     depends_on: # In this case only
@@ -25,3 +25,14 @@ services:
      - /lib/modules:/lib/modules        # Mounts kernel modules from the host to the container
      - ./scripts:/root/scripts
     network_mode: "host"
+
+  # Define a "Graphite" service
+  graphite:
+    image: graphiteapp/graphite-statsd
+    volumes:
+     - ./graphite/conf:/opt/graphite/conf
+     - ./graphite/storage:/opt/graphite/storage
+    ports:
+     - "2003-2004:2003-2004"
+     - "2023-2024:2023-2024"
+     - "9000:80"
