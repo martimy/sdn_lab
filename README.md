@@ -23,4 +23,4 @@ sdn$ docker compose up -d
 sdn$ docker compose down
 ```
 
-For complete lab instructions consult this [document](lab_instructions.md).
+For complete lab instructions consult this [document](docs/lab_instructions.md).

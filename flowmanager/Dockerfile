@@ -22,6 +22,9 @@ cd /home/auser/ryu &&\
 pip3 install . &&\
 python3 setup.py install
 
+# Install libraries needed for some application
+RUN pip3 install graphyte
+
 # Set permissions for FlowManager
 # Currently need to write log files
 RUN chown -R auser /home/auser/flowmanager

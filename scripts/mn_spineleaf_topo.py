@@ -1,8 +1,30 @@
 #!/usr/bin/python3
 
+"""
+MIT License
 
-# Copyright (C) 2024 Maen Artimy
+Copyright (c) 2024 Maen Artimy
 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
+import os
 import sys
 import yaml
 from mininet.net import Mininet
@@ -15,16 +37,14 @@ from mininet.log import info
 from mininet.cli import CLI
 
 
-def create_mininet_network(config_file):
+def create_mininet_network(config_file, ctrl="127.0.0.1"):
     with open(config_file, "r") as file:
         config = yaml.safe_load(file)
 
     net = Mininet(controller=RemoteController, link=TCLink, switch=OVSSwitch)
 
     info("*** Adding controller\n")
-    c0 = net.addController(
-        "ctrl", controller=RemoteController, ip="127.0.0.1", port=6633
-    )
+    c0 = net.addController("ctrl", controller=RemoteController, ip=ctrl, port=6633)
 
     switches = {}
     hosts = {}
@@ -72,12 +92,20 @@ def create_mininet_network(config_file):
 
 
 if __name__ == "__main__":
+    ctrl_address = os.getenv("SDN_CONTROLLER", "127.0.0.1")
+
     # Check if the command-line argument is provided
     if len(sys.argv) < 2:
-        print("Usage: sudo ./path/mn_spineleaf_topo.py <netconfig_file>")
+        print(
+            "Usage: sudo ./path/mn_spineleaf_topo.py <netconfig_file> [controller_address]"
+        )
         sys.exit(1)
 
     config_file = sys.argv[1]  # Get the config file name from the command-line argument
 
+    # Get the controller address. This overrides the env. variable
+    if len(sys.argv) > 2:
+        ctrl_address = sys.argv[2]
+
     setLogLevel("info")
-    create_mininet_network(config_file)
+    create_mininet_network(config_file, ctrl_address)
