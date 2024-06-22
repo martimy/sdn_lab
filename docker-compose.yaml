@@ -6,6 +6,7 @@ services:
     environment:
      - NETWORK_CONFIG_FILE=scripts/network_config.yaml
      - GRAPHITE_SERVER=graphite
+     - GRAPHITE_POLLTIME=15
     command: "scripts/dc_switch_1.py --observe-links"
 #    command: "scripts/dc_switch_3.py scripts/monitor_graphite.py --observe-links"
     volumes:
