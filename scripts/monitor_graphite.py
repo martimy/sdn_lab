@@ -27,7 +27,6 @@ from operator import attrgetter
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import MAIN_DISPATCHER, DEAD_DISPATCHER
-from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
 from base_switch import BaseSwitch
@@ -44,13 +43,12 @@ class MonitorGraphite(BaseSwitch):
 
     def __init__(self, *args, **kwargs):
         super(MonitorGraphite, self).__init__(*args, **kwargs)
-
+        self.setup_graphite()
         self.datapaths = {}
         self.monitor_thread = hub.spawn(self._monitor)
-        self.setup_graphite()
 
     def setup_graphite(self):
-        server = os.getenv("GRAPHITE_SERVER", "127.0.0.1")
+        server = os.environ.get("GRAPHITE_SERVER", "127.0.0.1")
         prefix = os.getenv("GRAPHITE_PREFIX", "ryu.monitor")
         polltime_str = os.getenv("GRAPHITE_POLLTIME", "10.0")
         self.polltime = float(polltime_str)
@@ -80,8 +78,24 @@ class MonitorGraphite(BaseSwitch):
 
     # Event Handlers
 
+    @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, DEAD_DISPATCHER])
+    def _state_change_handler(self, ev):
+        """Add or remove datapaths"""
+
+        datapath = ev.datapath
+        if ev.state == MAIN_DISPATCHER:
+            if datapath.id not in self.datapaths:
+                self.logger.debug("register datapath: %016x", datapath.id)
+                self.datapaths[datapath.id] = datapath
+        elif ev.state == DEAD_DISPATCHER:
+            if datapath.id in self.datapaths:
+                self.logger.debug("unregister datapath: %016x", datapath.id)
+                del self.datapaths[datapath.id]
+
     @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
     def _flow_stats_reply_handler(self, ev):
+        """Receive flow stats"""
+
         body = ev.msg.body
 
         self.logger.info("Sending flow stats to Graphite")
@@ -101,6 +115,8 @@ class MonitorGraphite(BaseSwitch):
 
     @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
     def _port_stats_reply_handler(self, ev):
+        """REceive port stats"""
+
         body = ev.msg.body
 
         self.logger.info("Sending port stats to Graphite")
