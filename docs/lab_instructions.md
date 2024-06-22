@@ -125,10 +125,13 @@ To send switches telemetry to Graphite, we will need to use and application `mon
     $ docker compose exec -it mininet ./scripts/mn_threeswitch_topo.py
     ```
 
-4. Flow and port counters will be sent to Graphite. Point you browser to `localhost:9000` and select the metrics labeled `ryu.monitor`.
-
-5. You can use `Iperf3` to generate traffic between nodes (edit the python code to change the traffic generation parameters):
+4. Generate traffic between hosts. For example, you can the Python code `traffic_gen.py` to generate traffic between nodes (you may edit the code to change the traffic generation parameters):
 
    ```bash
    mininet> py exec(open('scripts/traffic_gen.py').read())
    ```
+   
+5. Point you browser to `localhost:9000` and select the metrics labeled `ryu.monitor`. You will see all switch ID's listed with port and flow branchs under each. Select any metric you wish to view on the graph. Graphite can create graphs from URLs as well. The file `graphite.cfg` includes two URLs. In your browser, clik on 'Create from URL' button and copy and past one of the URL in the files in the input field.
+
+![Graphite Graph](graphite.png) 
+
