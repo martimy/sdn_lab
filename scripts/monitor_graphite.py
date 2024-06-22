@@ -87,11 +87,11 @@ class MonitorGraphite(BaseSwitch):
         datapath = ev.datapath
         if ev.state == MAIN_DISPATCHER:
             if datapath.id not in self.datapaths:
-                self.logger.debug("register datapath: %016x", datapath.id)
+                self.logger.info("register datapath: %016x", datapath.id)
                 self.datapaths[datapath.id] = datapath
         elif ev.state == DEAD_DISPATCHER:
             if datapath.id in self.datapaths:
-                self.logger.debug("unregister datapath: %016x", datapath.id)
+                self.logger.info("unregister datapath: %016x", datapath.id)
                 del self.datapaths[datapath.id]
 
     @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
@@ -104,7 +104,7 @@ class MonitorGraphite(BaseSwitch):
 
         body = ev.msg.body
 
-        self.logger.info("Sending flow stats to Graphite")
+        self.logger.info(f"Sending flow stats from {ev.msg.datapath.id} to Graphite")
         for stat in sorted(
             [flow for flow in body if flow.match.get("eth_dst")],
             key=lambda flow: (flow.table_id, flow.match["eth_dst"]),
@@ -125,7 +125,7 @@ class MonitorGraphite(BaseSwitch):
 
         body = ev.msg.body
 
-        self.logger.info("Sending port stats to Graphite")
+        self.logger.info(f"Sending port stats from {ev.msg.datapath.id} to Graphite")
         for stat in sorted(body, key=attrgetter("port_no")):
             # Send data to Graphite
             graphyte.send(
