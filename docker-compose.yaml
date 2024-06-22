@@ -4,25 +4,27 @@ services:
   controller:
     image: martimy/ryu-flowmanager
     environment:
-      - NETWORK_CONFIG_FILE=scripts/network_config.yaml
+     - NETWORK_CONFIG_FILE=scripts/network_config.yaml
+     - GRAPHITE_SERVER=graphite
     command: "scripts/dc_switch_1.py --observe-links"
+#    command: "scripts/dc_switch_3.py scripts/monitor_graphite.py --observe-links"
     volumes:
      - ./scripts:/home/auser/scripts
     ports:
-     - "6653:6653"  # Controller port
-     - "6633:6633"  # Controller port
+     - "6633"  # Controller port
+     - "6653"  # Controller port
      - "8080:8080"  # GUI port
 
   # Define a "mininet" service
   mininet:
     image: martimy/mininet
     depends_on: # In this case only
-      - controller
+     - controller
     tty: true # Allocates a pseudo-TTY (teletypewriter) for the container
     privileged: true # required for mininet to run inside a container
     environment:
-      SDN_CONTROLLER: controller
-      HISTFILE: /root/scripts/.bash_history
+     - SDN_CONTROLLER=controller
+     - HISTFILE=/root/scripts/.bash_history
       #  DISPLAY  # Passes the value of the DISPLAY environment variable to the container
     volumes:
      - /tmp/.X11-unix:/tmp/.X11-unix    # Mounts X11 socket for GUI access
@@ -36,6 +38,6 @@ services:
      - ./graphite/conf:/opt/graphite/conf
      - ./graphite/storage:/opt/graphite/storage
     ports:
-     - "2003-2004:2003-2004"
-     - "2023-2024:2023-2024"
+     - "2003-2004"
+     - "2023-2024"
      - "9000:80"
