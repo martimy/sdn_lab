@@ -98,22 +98,21 @@ Follow the following steps to run an application:
 
 ## Using Graphite
 
-To send switches telemetry to Graphite, we will need to use and application `monitor_graphite.py` with any other applications such as `learning_switch_2.py` (the dc_switch_x.py apps have not been tested yet):
+To send switches telemetry to Graphite, we will need to use and application `monitor_graphite.py` with any other applications such as `dc_switch_3.py`:
 
 1. Edit the Docker compose file `docker-compose.yaml` to add the app:
 
     ```bash
-    # Docker Compose for SDN Lab
-    services:
       # Define a "controller" service
       controller:
         image: martimy/ryu-flowmanager
         environment:
-          - NETWORK_CONFIG_FILE=scripts/network_config.yaml
-        command: "scripts/learning_switch_2.py scripts/monitor_graphite.py --observe-links"
-        ...
+         - NETWORK_CONFIG_FILE=scripts/network_config.yaml
+         - GRAPHITE_SERVER=graphite
+        command: "scripts/dc_switch_3.py scripts/monitor_graphite.py --observe-links"
+      ...
     ```
-
+    
 2. Start the containers in the background:
 
     ```bash
