@@ -61,6 +61,3 @@ time.sleep(duration + 2)
 
 # Print output from h4
 info(server.cmd("pkill iperf3"))
-
-# info('*** Starting the second round\n')
-net.iperf(hosts=[h1, h2, h3, h4], seconds=30, port=5001)
