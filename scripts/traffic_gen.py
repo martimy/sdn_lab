@@ -31,7 +31,7 @@ setLogLevel("info")
 # Set parameters
 duration = 60
 streams = 4
-bandwidth = 10
+bandwidth = 100  # Kbps
 
 # Get hosts
 host_names = ["h1", "h2", "h3", "h4"]
@@ -50,7 +50,7 @@ server.cmd("iperf3 -s &")
 info("*** Starting iperf3 clients\n")
 for h in hosts:
     h.cmd(
-        f"iperf3 -c {server.IP()} -t {duration} -i 10 -P {streams} -b {bandwidth}M -M 1400 > /dev/null 2>&1 &"
+        f"iperf3 -c {server.IP()} -t {duration} -i 10 -P {streams} -b {bandwidth}K -M 1400 > /dev/null 2>&1 &"
     )
 
 # Wait for the tests to complete

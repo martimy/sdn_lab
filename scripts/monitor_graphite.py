@@ -36,7 +36,7 @@ import graphyte
 
 class MonitorGraphite(BaseSwitch):
     """
-    Monitoring a Network
+    Sending network stats to Graphite
     """
 
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -48,7 +48,9 @@ class MonitorGraphite(BaseSwitch):
         self.monitor_thread = hub.spawn(self._monitor)
 
     def setup_graphite(self):
-        server = os.environ.get("GRAPHITE_SERVER", "127.0.0.1")
+        """Setup Graphite server"""
+
+        server = os.getenv("GRAPHITE_SERVER", "127.0.0.1")
         prefix = os.getenv("GRAPHITE_PREFIX", "ryu.monitor")
         polltime_str = os.getenv("GRAPHITE_POLLTIME", "10.0")
         self.polltime = float(polltime_str)
@@ -94,22 +96,26 @@ class MonitorGraphite(BaseSwitch):
 
     @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
     def _flow_stats_reply_handler(self, ev):
-        """Receive flow stats"""
+        """
+        Receive flow stats.
+        The flows are filtered so only flows from entries that have 'eth_dst' match are
+        reported. Change the filtering criteria to get the desired stats.
+        """
 
         body = ev.msg.body
 
         self.logger.info("Sending flow stats to Graphite")
         for stat in sorted(
-            [flow for flow in body if flow.priority == 1],
-            key=lambda flow: (flow.match["in_port"], flow.match["eth_dst"]),
+            [flow for flow in body if flow.match.get("eth_dst")],
+            key=lambda flow: (flow.table_id, flow.match["eth_dst"]),
         ):
             # Send data to Graphite
             graphyte.send(
-                f'{ev.msg.datapath.id}.flow.{stat.match["in_port"]}.{stat.match["eth_dst"]}.packets',
+                f'{ev.msg.datapath.id}.flow.{stat.table_id}.{stat.match["eth_dst"]}.packets',
                 stat.packet_count,
             )
             graphyte.send(
-                f'{ev.msg.datapath.id}.flow.{stat.match["in_port"]}.{stat.match["eth_dst"]}.bytes',
+                f'{ev.msg.datapath.id}.flow.{stat.table_id}.{stat.match["eth_dst"]}.bytes',
                 stat.byte_count,
             )
 
