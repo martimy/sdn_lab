@@ -23,7 +23,7 @@ pip3 install . &&\
 python3 setup.py install
 
 # Install libraries needed for some application
-RUN pip3 install graphyte
+RUN pip3 install graphyte influxdb_client prometheus-client influxdb
 
 # Set permissions for FlowManager
 # Currently need to write log files
