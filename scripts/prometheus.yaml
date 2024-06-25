@@ -6,6 +6,6 @@ global:
 # metrics_path defaults to '/metrics'
 # scheme defaults to 'http'.
 scrape_configs:
-  - job_name: 'ryunet'
+  - job_name: 'ryu_monitor'
     static_configs:
-      - targets: ['localhost:8088']
+      - targets: ['controller:8080']

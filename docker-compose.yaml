@@ -8,15 +8,15 @@ services:
      - GRAPHITE_SERVER=graphite
      - GRAPHITE_POLLTIME=15
      - INFLUXDB_HOST=influxdb
-    command: "scripts/dc_switch_1.py --observe-links"
-#    command: "scripts/dc_switch_3.py scripts/monitor_influxdb.py --observe-links"
+#    command: "scripts/dc_switch_1.py --observe-links"
+    command: "scripts/dc_switch_3.py scripts/monitor_influxdb.py --observe-links"
+    command: "scripts/dc_switch_3.py scripts/monitor_prometheus.py --observe-links"
     volumes:
      - ./scripts:/home/auser/scripts
     ports:
      - "6633"  # Controller port
      - "6653"  # Controller port
      - "8080:8080"  # GUI port
-     - "8088:8088"  # Prometheus port
 
   # Define a "mininet" service
   mininet:

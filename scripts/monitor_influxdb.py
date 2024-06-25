@@ -37,8 +37,8 @@ class MonitorInfluxDB(BaseSwitch):
             f"Sending telemetry to InfluxDB at {self.influx_client._baseurl} every {self.polltime} sec."
         )
 
-        database=os.getenv("INFLUXDB_DB", "ryu_monitor")
-        names = [item['name'] for item in self.influx_client.get_list_database()]
+        database = os.getenv("INFLUXDB_DB", "ryu_monitor")
+        names = [item["name"] for item in self.influx_client.get_list_database()]
         if database not in names:
             self.influx_client.create_database(database)
 
@@ -101,12 +101,9 @@ class MonitorInfluxDB(BaseSwitch):
                     "tags": {
                         "datapath": ev.msg.datapath.id,
                         "table_id": stat.table_id,
-                        "eth_dst": stat.match["eth_dst"]
+                        "eth_dst": stat.match["eth_dst"],
                     },
-                    "fields": {
-                        "packets": stat.packet_count,
-                        "bytes": stat.byte_count
-                    }
+                    "fields": {"packets": stat.packet_count, "bytes": stat.byte_count},
                 }
             ]
             self.influx_client.write_points(data)
@@ -123,19 +120,15 @@ class MonitorInfluxDB(BaseSwitch):
             data = [
                 {
                     "measurement": "port_stats",
-                    "tags": {
-                        "datapath": ev.msg.datapath.id,
-                        "port_no": stat.port_no
-                    },
+                    "tags": {"datapath": ev.msg.datapath.id, "port_no": stat.port_no},
                     "fields": {
                         "rx_packets": stat.rx_packets,
                         "rx_bytes": stat.rx_bytes,
                         "rx_errors": stat.rx_errors,
                         "tx_packets": stat.tx_packets,
                         "tx_bytes": stat.tx_bytes,
-                        "tx_errors": stat.tx_errors
-                    }
+                        "tx_errors": stat.tx_errors,
+                    },
                 }
             ]
             self.influx_client.write_points(data)
-
