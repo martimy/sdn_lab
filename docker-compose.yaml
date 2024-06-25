@@ -7,14 +7,16 @@ services:
      - NETWORK_CONFIG_FILE=scripts/network_config.yaml
      - GRAPHITE_SERVER=graphite
      - GRAPHITE_POLLTIME=15
+     - INFLUXDB_HOST=influxdb
     command: "scripts/dc_switch_1.py --observe-links"
-#    command: "scripts/dc_switch_3.py scripts/monitor_graphite.py --observe-links"
+#    command: "scripts/dc_switch_3.py scripts/monitor_influxdb.py --observe-links"
     volumes:
      - ./scripts:/home/auser/scripts
     ports:
      - "6633"  # Controller port
      - "6653"  # Controller port
      - "8080:8080"  # GUI port
+     - "8088:8088"  # Prometheus port
 
   # Define a "mininet" service
   mininet:
@@ -42,3 +44,21 @@ services:
      - "2003-2004"
      - "2023-2024"
      - "9000:80"
+
+  # Define a "Prometheus" service
+  prometheus:
+    image: prom/prometheus
+    volumes:
+     - ./scripts/prometheus.yaml:/etc/prometheus/prometheus.yml
+     - ./prometheus:/prometheus
+    ports:
+     - "9090:9090"
+
+  # Define a "InfluxDB" service
+  influxdb:
+    image: influxdb:1.8
+    volumes:
+     - ./influxdb/data:/var/lib/influxdb2" \
+     - ./influxdb/config:/etc/influxdb2" \
+    ports:
+     - "8086:8086"
