@@ -4,3 +4,4 @@ scripts/.bash_history
 graphite
 influxdb
 prometheus
+grafana

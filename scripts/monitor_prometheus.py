@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import os
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 from ryu.base import app_manager
 from ryu.controller import ofp_event
@@ -51,6 +52,8 @@ class MonitorPrometheus(app_manager.RyuApp):
         self.datapaths = {}
         self.monitor_thread = hub.spawn(self._monitor)
 
+        self.polltime = float(os.getenv("PROMETHEUS_POLLTIME", "10.0"))
+
         # Prometheus metrics
         self.packet_count_gauge = Gauge(
             "ryu_packet_count", "Packet count per flow", ["datapath_id", "flow"]
@@ -75,7 +78,7 @@ class MonitorPrometheus(app_manager.RyuApp):
         while True:
             for dp in self.datapaths.values():
                 self._request_stats(dp)
-            hub.sleep(10)
+            hub.sleep(self.polltime)
 
     def _request_stats(self, datapath):
         self.logger.debug("send stats request: %016x", datapath.id)

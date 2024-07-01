@@ -6,11 +6,13 @@ services:
     environment:
      - NETWORK_CONFIG_FILE=scripts/network_config.yaml
      - GRAPHITE_SERVER=graphite
-     - GRAPHITE_POLLTIME=15
+     - GRAPHITE_POLLTIME=30
      - INFLUXDB_HOST=influxdb
-    command: "scripts/dc_switch_1.py --observe-links"
-#    command: "scripts/dc_switch_3.py scripts/monitor_influxdb.py --observe-links"
-#    command: "scripts/dc_switch_3.py scripts/monitor_prometheus.py --observe-links"
+     - INFLUXDB_POLLTIME=30
+     - PROMETHEUS_POLLTIME=30
+#    command: "scripts/dc_switch_1.py --observe-links"
+    command: "scripts/dc_switch_3.py scripts/monitor_influxdb.py \
+              scripts/monitor_graphite.py scripts/monitor_prometheus.py --observe-links"
     volumes:
      - ./scripts:/home/auser/scripts
     ports:
@@ -64,3 +66,16 @@ services:
      - ./influxdb/config:/etc/influxdb2" \
     ports:
      - "8086:8086"
+
+  # Define a "Grafana" service
+  grafana:
+    image: grafana/grafana:latest
+    user: "0"
+    volumes:
+      - ./grafana/grafana_data:/var/lib/grafana
+      - ./grafana/grafana_conf/grafana.ini:/etc/grafana/grafana.ini
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"

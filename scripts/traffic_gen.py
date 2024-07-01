@@ -34,7 +34,7 @@ streams = 4
 bandwidth = 100  # Kbps
 
 # Get hosts
-host_names = ["h1", "h2", "h3", "h4"]
+host_names = ["h1", "h2", "h3", "h4", "h5", "h6"]
 
 hosts = []
 for h in host_names:
