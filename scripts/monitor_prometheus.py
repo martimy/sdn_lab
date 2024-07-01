@@ -53,13 +53,13 @@ class MonitorPrometheus(app_manager.RyuApp):
 
         # Prometheus metrics
         self.packet_count_gauge = Gauge(
-            "packet_count", "Packet count per flow", ["datapath_id", "flow"]
+            "ryu_packet_count", "Packet count per flow", ["datapath_id", "flow"]
         )
         self.byte_count_gauge = Gauge(
-            "byte_count", "Byte count per flow", ["datapath_id", "flow"]
+            "ryu_byte_count", "Byte count per flow", ["datapath_id", "flow"]
         )
         self.duration_sec_gauge = Gauge(
-            "duration_sec", "Flow duration in seconds", ["datapath_id", "flow"]
+            "ryu_duration_sec", "Flow duration in seconds", ["datapath_id", "flow"]
         )
 
     @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, DEAD_DISPATCHER])

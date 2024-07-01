@@ -8,9 +8,9 @@ services:
      - GRAPHITE_SERVER=graphite
      - GRAPHITE_POLLTIME=15
      - INFLUXDB_HOST=influxdb
-#    command: "scripts/dc_switch_1.py --observe-links"
-    command: "scripts/dc_switch_3.py scripts/monitor_influxdb.py --observe-links"
-    command: "scripts/dc_switch_3.py scripts/monitor_prometheus.py --observe-links"
+    command: "scripts/dc_switch_1.py --observe-links"
+#    command: "scripts/dc_switch_3.py scripts/monitor_influxdb.py --observe-links"
+#    command: "scripts/dc_switch_3.py scripts/monitor_prometheus.py --observe-links"
     volumes:
      - ./scripts:/home/auser/scripts
     ports:
@@ -51,6 +51,8 @@ services:
     volumes:
      - ./scripts/prometheus.yaml:/etc/prometheus/prometheus.yml
      - ./prometheus:/prometheus
+    command:
+     - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
      - "9090:9090"
 
