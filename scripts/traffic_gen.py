@@ -49,9 +49,10 @@ server.cmd("iperf3 -s &")
 # Start iperf3 clients on h1, h2, and h3 to send traffic to h4
 info("*** Starting iperf3 clients\n")
 for h in hosts:
-    h.cmd(
-        f"iperf3 -c {server.IP()} -t {duration} -i 10 -P {streams} -b {bandwidth}K -M 1400 > /dev/null 2>&1 &"
-    )
+    if h is not server:
+        h.cmd(
+            f"iperf3 -c {server.IP()} -t {duration} -i 10 -P {streams} -b {bandwidth}K -M 1400 > /dev/null 2>&1 &"
+        )
 
 # Wait for the tests to complete
 info("*** Waiting for iperf3 tests to complete\n")
