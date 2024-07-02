@@ -20,17 +20,26 @@ This lab environment consists of five OpenFlow switches (created using Open vSwi
 
 At boot time, OpenFlow switches do not know how to forward packets and rely completely on the controller to provide them with instructions on how to process the packets. The controller supplies these instructions using the OpenFlow protocol. However, the controller does not generate these instructions by itself but rather translates the user’s application instructions into OpenFlow messages.
 
-This lab includes two applications that control how packets are forwarded through the network.
+This lab includes three applications that control how packets are forwarded through the network.
 
 ### Docker Images
 
 All applications used in the lab are housed in Docker containers. There are two Docker images used in the lab. One image includes the Mininet emulator, and the other includes the Ryu controller and the FlowManager software. The latter provide a web interface that provides user-friendly access to the OpenFlow switches. A Docker compose file is used to start, stop, and remove the container in easy manner. Both Docker images have access to Python scripts and other files that reside on the host VM, so these files are accessible inside and outside the containers.
 
+## Starting the Lab
+
+To start the lab, clone this repository to your local machine under folder 'sdn' then navigate to the root directory of the repository:
+
+```bash
+$ git clone https://github.com/martimy/sdn_lab sdn
+$ cd sdn
+sdn$ docker compose up -d
+```
 
 ## Running An Application
 
 
-This lab includes two applications written in Python. The applications can add and modify the switch’s flow entries dynamically as packets arrive from hosts to switches.
+This lab includes several Python pplications. The applications can add and modify the switch's flow entries dynamically as packets arrive from hosts to switches.
 
 Follow the following steps to run an application:
 
@@ -53,19 +62,21 @@ Follow the following steps to run an application:
          - ./scripts:/home/auser/scripts
     ```
 
-2. Start the containers in the background:
+    The `command` line includes the name(s) of the applications that need to be apploaded to the controller. Note the FlowManager application is uploaded automatically.
+    
+3. Start the containers in the background:
 
     ```bash
     $ docker compose up -d
     ```
 
-3. Docker will start two containers. The controller container runs the SDN controller (Ryu), the FlowManager application, which is a GUI for the controller, and the Python application `dc_switch_1.py`, which manages the switches. You can verify the controller has started successfully by checking the logs:
+4. Docker will start two containers. The controller container runs the SDN controller (Ryu), the FlowManager application, which is a GUI for the controller, and the Python application `dc_switch_1.py`, which manages the switches. You can verify the controller has started successfully by checking the logs:
 
     ```bash
     $ docker compose logs controller
     ```
 
-4. Next, you need to use Mininet from inside the Mininet container to create the data centre topology and interact with the hosts to send and receive traffic. Enter the mininet container using the following command:
+5. Next, you need to use Mininet from inside the Mininet container to create the data centre topology and interact with the hosts to send and receive traffic. Enter the mininet container using the following command:
 
     ```bash
     $ docker compose exec -it mininet bash
@@ -79,9 +90,9 @@ Follow the following steps to run an application:
    $ docker compose exec -it mininet ./scripts/mn_spineleaf_topo.py scripts/network_config.yaml
    ```
 
-5. At the Mininet prompt, ping between all hosts using "pingall" command. Your ping should be successful.
+6. At the Mininet prompt, ping between all hosts using "pingall" command. Your ping should be successful.
 
-    ```
+    ```bash
     mininet> pingall
     *** Ping: testing ping reachability
     h1 -> h2 h3 h4 h5 h6
@@ -93,45 +104,22 @@ Follow the following steps to run an application:
     *** Results: 0% dropped (30/30 received)
     ```
 
-6. Point your browser to `http://localhost:8080/home/` and confirm the network topology using the FlowManager's Topology view. You should see five switches and six hosts.
-
-
-## Using Graphite
-
-To send switches telemetry to Graphite, we will need to use and application `monitor_graphite.py` with any other applications such as `dc_switch_3.py`:
-
-1. Edit the Docker compose file `docker-compose.yaml` to add the app:
-
-    ```bash
-      # Define a "controller" service
-      controller:
-        image: martimy/ryu-flowmanager
-        environment:
-         - NETWORK_CONFIG_FILE=scripts/network_config.yaml
-         - GRAPHITE_SERVER=graphite
-        command: "scripts/dc_switch_3.py scripts/monitor_graphite.py --observe-links"
-      ...
-    ```
-    
-2. Start the containers in the background:
-
-    ```bash
-    $ docker compose up -d
-    ```
-
-3. Create the topology using Mininet:
-
-    ```bash
-    $ docker compose exec -it mininet ./scripts/mn_threeswitch_topo.py
-    ```
-
-4. Generate traffic between hosts. For example, you can the Python code `traffic_gen.py` to generate traffic between nodes (you may edit the code to change the traffic generation parameters):
+7. Generate using the Python code `traffic_gen.py` (you may edit the code to change the traffic generation parameters):
 
    ```bash
    mininet> py exec(open('scripts/traffic_gen.py').read())
    ```
-   
-5. Point you browser to `localhost:9000` and select the metrics labeled `ryu.monitor`. You will see all switch ID's listed with port and flow branchs under each. Select any metric you wish to view on the graph. Graphite can create graphs from URLs as well. The file `graphite.cfg` includes two URLs. In your browser, clik on 'Create from URL' button and copy and past one of the URL in the files in the input field.
 
-![Graphite Graph](graphite.png) 
+7. Point your browser to `http://localhost:8080/home/` and confirm the network topology using the FlowManager's Topology view. You should see five switches and six hosts. Check also the flow tables and observe the type of flow entries that are included in the table.
+
+
+  
+## Stopping the lab
+
+To stop the lab:
+
+```bash
+sdn$ docker compose down
+```
+
 
