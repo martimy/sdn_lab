@@ -28,7 +28,7 @@ docker pull influxdb:1.8
 docker pull grafana/grafana:latest
 ```
 
-### 3. Setup Applications and Environment Variables 
+### 3. Setup Applications and Environment Variables
 
 Edit the `docker-compose.yaml` file to ensure the required applications are included in the `command` line. Also set the desired poll times for each application using the environment variables. The top of file should look similar to the following:
 
@@ -54,7 +54,7 @@ services:
 Navigate to the directory containing the `docker-compose.yml` file and run:
 
 ```sh
-docker-compose --profile monitoring up -d
+docker compose --profile monitoring up -d
 ```
 
 This command will start all the services defined in the `docker-compose.yml` file in detached mode.
@@ -73,25 +73,25 @@ Note that InfluxDB does not have a GUI but data can be retrieved via `http://loc
 
 To view the logs for a specific service, use:
 ```sh
-docker-compose logs <service_name>
+docker compose logs <service_name>
 ```
 
 For example, to view logs for the controller service:
 ```sh
-docker-compose logs controller
+docker compose logs controller
 ```
 
 ## Stopping the Services and Cleanup
 
 To stop the services, run:
 ```sh
-docker-compose down
+docker compose --profile monitoring down
 ```
 
 To remove all containers and associated volumes, use:
 
 ```sh
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Example: Using Graphite
@@ -110,11 +110,11 @@ To send switches telemetry to Graphite, we will need to use and application `mon
         command: "scripts/dc_switch_3.py scripts/monitor_graphite.py --observe-links"
       ...
     ```
-    
+
 2. Start the containers in the background:
 
     ```bash
-    $ docker compose up -d
+    $ docker compose --profile graphite up -d
     ```
 
 3. Create the topology using Mininet:
@@ -128,7 +128,7 @@ To send switches telemetry to Graphite, we will need to use and application `mon
    ```bash
    mininet> py exec(open('scripts/traffic_gen.py').read())
    ```
-   
+
 5. Point you browser to `localhost:9000` and select the metrics labeled `ryu.monitor`. You will see all switch ID's listed with port and flow branchs under each. Select any metric you wish to view on the graph. Graphite can create graphs from URLs as well. The file `graphite.cfg` includes two URLs. In your browser, clik on 'Create from URL' button and copy and past one of the URL in the files in the input field.
 
-![Graphite Graph](graphite.png) 
+![Graphite Graph](graphite.png)
