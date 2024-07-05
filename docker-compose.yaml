@@ -10,7 +10,7 @@ services:
      - INFLUXDB_HOST=influxdb
      - INFLUXDB_POLLTIME=30
      - PROMETHEUS_POLLTIME=30
-#    command: "scripts/dc_switch_1.py --observe-links"
+#    command: "scripts/learning_switch_tree.py --observe-links"
     command: "scripts/dc_switch_3.py scripts/monitor_influxdb.py \
               scripts/monitor_graphite.py scripts/monitor_prometheus.py --observe-links"
     volumes:
@@ -41,6 +41,8 @@ services:
     image: graphiteapp/graphite-statsd
     volumes:
      - ./graphite/conf:/opt/graphite/conf
+     - ./conf/storage-schemas.conf:/opt/graphite/conf/storage-schemas.conf
+     - ./conf/storage-aggregation.conf:/opt/graphite/conf/storage-aggregation.conf
      - ./graphite/storage:/opt/graphite/storage
     ports:
      - "2003-2004"
@@ -48,7 +50,7 @@ services:
      - "9000:80"
     profiles:
       - graphite
-      - monitoring
+      - monitor
 
   # Define a "Prometheus" service
   prometheus:
@@ -62,7 +64,7 @@ services:
      - "9090:9090"
     profiles:
       - prometheus
-      - monitoring
+      - monitor
 
   # Define a "InfluxDB" service
   influxdb:
@@ -74,7 +76,7 @@ services:
      - "8086:8086"
     profiles:
       - influxdb
-      - monitoring
+      - monitor
 
   # Define a "Grafana" service
   grafana:
@@ -90,4 +92,4 @@ services:
       - "3000:3000"
     profiles:
       - grafana
-      - monitoring
+      - monitor
