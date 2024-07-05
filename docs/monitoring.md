@@ -54,7 +54,7 @@ services:
 Navigate to the directory containing the `docker-compose.yml` file and run:
 
 ```sh
-docker compose --profile monitoring up -d
+docker compose --profile monitor up -d
 ```
 
 This command will start all the services defined in the `docker-compose.yml` file in detached mode.
@@ -85,7 +85,7 @@ docker compose logs controller
 
 To stop the services, run:
 ```sh
-docker compose --profile monitoring down
+docker compose --profile monitor down
 ```
 
 To remove all containers and associated volumes, use:
