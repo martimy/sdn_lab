@@ -2,6 +2,8 @@
 
 This lab including applications for collecting network metrics and send them to Graphite, Prometheus, and InfluxDB databases. These metrics can be view using the database's own web interface or using Grafana.
 
+![Metrics](metrics_light.png)
+
 ## Prerequisites
 
 Before you use Docker compose to start all services, make sure you create the directory structure needed for each service
