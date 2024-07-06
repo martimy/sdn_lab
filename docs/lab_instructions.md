@@ -14,13 +14,16 @@ The Network
 
 This lab environment consists of five OpenFlow switches (created using Open vSwitch), a controller (Ryu) and six hosts (servers). The Mininet emulator creates the switches and hosts, resulting in the network topology shown below.
 
-![Figure 1 Lab Topology.](SDN_SpineLeaf.drawio.png)
+![Figure 1 Lab Topology](SDN_SpineLeaf.drawio.png)
+
 
 ### OpenFlow Switch Operation
 
 At boot time, OpenFlow switches do not know how to forward packets and rely completely on the controller to provide them with instructions on how to process the packets. The controller supplies these instructions using the OpenFlow protocol. However, the controller does not generate these instructions by itself but rather translates the user’s application instructions into OpenFlow messages.
 
 This lab includes three applications that control how packets are forwarded through the network.
+
+![Figure 2 FlowManager](flowmanager.png)
 
 ### Docker Images
 
