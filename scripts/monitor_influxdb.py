@@ -63,6 +63,14 @@ class MonitorInfluxDB(BaseSwitch):
 
         self.send_messages(datapath, msgs)
 
+    def _has_controller_action(self, stat, ofproto):
+        for instruction in stat.instructions:
+            if instruction.type == ofproto.OFPIT_APPLY_ACTIONS:
+                for action in instruction.actions:
+                    if action.type == ofproto.OFPAT_OUTPUT and action.port == ofproto.OFPP_CONTROLLER:
+                        return True
+        return False
+
     # Event Handlers
 
     @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, DEAD_DISPATCHER])
@@ -88,6 +96,23 @@ class MonitorInfluxDB(BaseSwitch):
         """
 
         body = ev.msg.body
+
+        for stat in body:
+            if self._has_controller_action(stat, ev.msg.datapath.ofproto):
+                # Send data to InfluxDB
+                data = [
+                    {
+                        "measurement": "flow_stats",
+                        "tags": {
+                            "datapath": ev.msg.datapath.id,
+                            "table_id": stat.table_id,
+                            "dest": "controller",
+                        },
+                        "fields": {"packets": stat.packet_count, "bytes": stat.byte_count},
+                    }
+                ]
+                self.influx_client.write_points(data)
+
 
         self.logger.info(f"Sending flow stats from {ev.msg.datapath.id} to InfluxDB")
         for stat in sorted(
