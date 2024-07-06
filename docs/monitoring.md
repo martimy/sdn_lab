@@ -61,7 +61,7 @@ docker compose --profile monitor up -d
 
 This command will start all the services defined in the `docker-compose.yml` file in detached mode.
 
-## Access the Services' GUI
+## Access the Services
 
 - Controller: The FlowManager GUI is accessible at `http://localhost:8080/home`.
 - Graphite: The Graphite web interface is accessible at `http://localhost:9000`.
