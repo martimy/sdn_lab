@@ -55,15 +55,23 @@ class MonitorPrometheus(app_manager.RyuApp):
         self.polltime = float(os.getenv("PROMETHEUS_POLLTIME", "10.0"))
 
         # Prometheus metrics
+        self.flow_count_gauge = Gauge(
+            "ryu_flow_count", "Flows count", ["datapath_id", "table_id"]
+        )
         self.packet_count_gauge = Gauge(
-            "ryu_packet_count", "Packet count per flow", ["datapath_id", "flow"]
+            "ryu_packet_count",
+            "Packet count per flow",
+            ["datapath_id", "table_id", "eth_dst", "ipv4_dst", "ipv4_src"],
         )
         self.byte_count_gauge = Gauge(
-            "ryu_byte_count", "Byte count per flow", ["datapath_id", "flow"]
+            "ryu_byte_count",
+            "Byte count per flow",
+            ["datapath_id", "table_id", "eth_dst", "ipv4_dst", "ipv4_src"],
         )
-        self.duration_sec_gauge = Gauge(
-            "ryu_duration_sec", "Flow duration in seconds", ["datapath_id", "flow"]
-        )
+        # self.duration_sec_gauge = Gauge(
+        #     "ryu_duration_sec",
+        #     "Flow duration in seconds",
+        #     ["datapath_id", "table_id", "eth_dst", "ipv4_dst", "ipv4_src"])
 
     @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, DEAD_DISPATCHER])
     def _state_change_handler(self, ev):
@@ -92,21 +100,103 @@ class MonitorPrometheus(app_manager.RyuApp):
     def _flow_stats_reply_handler(self, ev):
         body = ev.msg.body
 
+        # Get flow count per table
+        table_flow_count = {}
+        for stat in body:
+            table_id = stat.table_id
+            x = table_flow_count.setdefault(table_id, 0)
+            table_flow_count[table_id] = x + 1
+
+        for table_id, count in table_flow_count.items():
+            self.flow_count_gauge.labels(
+                datapath_id=ev.msg.datapath.id, table_id=table_id
+            ).set(count)
+
+        # Get all flows with ANY in the Match field
+        for stat in [flow for flow in body if not flow.match]:
+            self.packet_count_gauge.labels(
+                datapath_id=ev.msg.datapath.id,
+                table_id=stat.table_id,
+                eth_dst="",
+                ipv4_dst="",
+                ipv4_src="",
+            ).set(stat.packet_count)
+            self.byte_count_gauge.labels(
+                datapath_id=ev.msg.datapath.id,
+                table_id=stat.table_id,
+                eth_dst="",
+                ipv4_dst="",
+                ipv4_src="",
+            ).set(stat.byte_count)
+            # self.duration_sec_gauge.labels(
+            #     datapath_id=ev.msg.datapath.id,
+            #     table_id=stat.table_id,
+            #     eth_dst="",
+            #     ipv4_dst="",
+            #     ipv4_src="",
+            # ).set(stat.duration_sec)
+
+        # Get all flows with 'eth_dst' in the Match field
         for stat in sorted(
             [flow for flow in body if flow.match.get("eth_dst")],
             key=lambda flow: (flow.table_id, flow.match["eth_dst"]),
         ):
-
             flow_id = f"{stat.table_id}_{stat.match['eth_dst']}"
             self.packet_count_gauge.labels(
-                datapath_id=ev.msg.datapath.id, flow=flow_id
+                datapath_id=ev.msg.datapath.id,
+                table_id=stat.table_id,
+                eth_dst=stat.match["eth_dst"],
+                ipv4_dst="",
+                ipv4_src="",
             ).set(stat.packet_count)
             self.byte_count_gauge.labels(
-                datapath_id=ev.msg.datapath.id, flow=flow_id
+                datapath_id=ev.msg.datapath.id,
+                table_id=stat.table_id,
+                eth_dst=stat.match["eth_dst"],
+                ipv4_dst="",
+                ipv4_src="",
             ).set(stat.byte_count)
-            self.duration_sec_gauge.labels(
-                datapath_id=ev.msg.datapath.id, flow=flow_id
-            ).set(stat.duration_sec)
+            # self.duration_sec_gauge.labels(
+            #     datapath_id=ev.msg.datapath.id,
+            #     table_id=stat.table_id,
+            #     eth_dst=stat.match["eth_dst"],
+            #     ipv4_dst="",
+            #     ipv4_src="",
+            # ).set(stat.duration_sec)
+
+        # Get all flows with 'ipv4_dst' in the Match field
+        for stat in sorted(
+            [flow for flow in body if flow.match.get("ipv4_dst")],
+            key=lambda flow: (
+                flow.table_id,
+                flow.match["ipv4_dst"],
+                flow.match["ipv4_src"],
+            ),
+        ):
+            flow_id = (
+                f"{stat.table_id}_{stat.match['ipv4_dst']}_{stat.match['ipv4_src']}"
+            )
+            self.packet_count_gauge.labels(
+                datapath_id=ev.msg.datapath.id,
+                table_id=stat.table_id,
+                eth_dst="",
+                ipv4_dst=stat.match["ipv4_dst"],
+                ipv4_src=stat.match["ipv4_src"],
+            ).set(stat.packet_count)
+            self.byte_count_gauge.labels(
+                datapath_id=ev.msg.datapath.id,
+                table_id=stat.table_id,
+                eth_dst="",
+                ipv4_dst=stat.match["ipv4_dst"],
+                ipv4_src=stat.match["ipv4_src"],
+            ).set(stat.byte_count)
+            # self.duration_sec_gauge.labels(
+            #     datapath_id=ev.msg.datapath.id,
+            #     table_id=stat.table_id,
+            #     eth_dst="",
+            #     ipv4_dst=stat.match["ipv4_dst"],
+            #     ipv4_src=stat.match["ipv4_src"],
+            # ).set(stat.duration_sec)
 
 
 class PrometheusController(ControllerBase):
